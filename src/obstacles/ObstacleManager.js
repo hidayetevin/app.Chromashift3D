@@ -8,6 +8,13 @@ class ObstacleManager {
         this.nextSpawnY = 15; // Start spawning much higher (was 5)
         this.obstaclesSinceSwitch = 0;
         this.futurePlayerColor = null; // Track expected player color for future obstacles
+
+        this.setNextSwitchThreshold(); // Set initial random threshold
+    }
+
+    setNextSwitchThreshold() {
+        // Random integer between 3 and 7 (inclusive)
+        this.switchThreshold = Math.floor(Math.random() * (7 - 3 + 1)) + 3;
     }
 
     update(deltaTime, player, score) {
@@ -48,9 +55,10 @@ class ObstacleManager {
         let rotationSpeed = 50 + (score * 2);
 
         // Check for Color Switch Event
-        if (this.obstaclesSinceSwitch >= 1) {
+        if (this.obstaclesSinceSwitch >= this.switchThreshold) {
             type = 'color_switcher';
             this.obstaclesSinceSwitch = 0;
+            this.setNextSwitchThreshold(); // Plan next interval
             // Switcher is always centered
             spawnX = 0;
             rotationSpeed = 100;
