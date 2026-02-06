@@ -249,13 +249,20 @@ class Obstacle {
         });
     }
 
-    createPentagon() {
-        const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN];
-        const pentColors = [];
-        for (let i = 0; i < 5; i++) pentColors.push(colors[i % 4]);
+    createPentagon(playerColor) {
+        let targetColor = playerColor || COLORS.RED;
+        const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
+        // Shuffle other colors
+        otherColors.sort(() => Math.random() - 0.5);
 
-        // Shuffle colors
-        pentColors.sort(() => Math.random() - 0.5);
+        // Requirement: Player color must be on two adjacent columns.
+        // Array: [Target, Target, Other1, Other2, Other3]
+        let pentColors = [targetColor, targetColor, ...otherColors];
+
+        // Randomly rotate the array so the "double gate" isn't always at the start angle
+        const shift = Math.floor(Math.random() * 5);
+        // Rotate array
+        pentColors = [...pentColors.slice(shift), ...pentColors.slice(0, shift)];
 
         const sideLength = 3.2; // Slightly larger side for Pentagon to match size
         const tubeGeom = getTubeGeometry(sideLength);
@@ -304,25 +311,44 @@ class Obstacle {
     createDoubleCircle() {
         const radius = 2.2;
 
+        // Generate synchronized colors
+        // Left Colors: Random
+        const colorsL = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
+
+        // Right Colors: Synced to match at intersection (X=0)
+        // Left Ring rotates +theta, Right Ring rotates -theta.
+        // Left Contact Point: 0 deg. Right Contact Point: 180 deg.
+        // Requirement: L(-theta) == R(PI + theta)
+        // Implies: R[0]=L[2], R[1]=L[1], R[2]=L[0], R[3]=L[3]
+        const colorsR = new Array(4);
+        colorsR[0] = colorsL[2];
+        colorsR[1] = colorsL[1];
+        colorsR[2] = colorsL[0];
+        colorsR[3] = colorsL[3];
+
         // Left Ring Group
         this.leftRing = new THREE.Group();
         this.leftRing.position.x = -2.2;
+        this.leftRing.rotation.z = -Math.PI / 4; // Align segments cardinally
         this.mesh.add(this.leftRing);
-        this.createRingGeometry(radius, this.leftRing);
+        this.createRingGeometry(radius, this.leftRing, colorsL);
 
         // Right Ring Group
         this.rightRing = new THREE.Group();
         this.rightRing.position.x = 2.2;
+        this.rightRing.rotation.z = -Math.PI / 4; // Align segments cardinally
         this.mesh.add(this.rightRing);
-        this.createRingGeometry(radius, this.rightRing);
+        this.createRingGeometry(radius, this.rightRing, colorsR);
     }
 
-    createRingGeometry(radius, parentGroup = null) {
+    createRingGeometry(radius, parentGroup = null, fixedColors = null) {
         const tube = 0.3;
         const radialSegments = 16;
         const tubularSegments = 32;
         const arc = Math.PI / 2;
-        const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
+
+        // Use fixed colors if provided, otherwise random shuffle
+        const colors = fixedColors ? fixedColors : [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
 
         for (let i = 0; i < 4; i++) {
             const geometry = new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments, arc);
@@ -349,8 +375,9 @@ class Obstacle {
         this.passed = false;
         this.mesh.visible = true;
         if (this.innerRing) this.innerRing.rotation.set(0, 0, 0);
-        if (this.leftRing) this.leftRing.rotation.set(0, 0, 0);
-        if (this.rightRing) this.rightRing.rotation.set(0, 0, 0);
+        // Reset to aligned position -PI/4
+        if (this.leftRing) this.leftRing.rotation.set(0, 0, -Math.PI / 4);
+        if (this.rightRing) this.rightRing.rotation.set(0, 0, -Math.PI / 4);
     }
 
     update(deltaTime) {
