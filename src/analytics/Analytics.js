@@ -3,6 +3,7 @@ import { FirebaseAnalytics } from '@capacitor-firebase/analytics';
 class Analytics {
     constructor() {
         this.isEnabled = true;
+        this.isSupported = false; // Assume false initially
         this.eventQueue = [];
         this.isOffline = !navigator.onLine;
 
@@ -20,14 +21,17 @@ class Analytics {
         try {
             await FirebaseAnalytics.setEnabled({ enabled: true });
             console.log('Firebase Analytics initialized');
+            this.isSupported = true;
             this.flushQueue();
         } catch (error) {
-            console.warn('Analytics init failed (Web Mode?):', error);
-            // We might be on web, so we just log to console
+            console.warn('Analytics init failed (Web Mode?): Disabling analytics.');
+            this.isSupported = false;
         }
     }
 
     track(eventName, params = {}) {
+        if (!this.isEnabled || !this.isSupported) return;
+
         const eventData = {
             name: eventName,
             params: {
@@ -38,18 +42,20 @@ class Analytics {
 
         if (this.isOffline) {
             this.eventQueue.push(eventData);
-            console.log('[Analytics - Offline Queue]', eventName, params);
+            // console.log('[Analytics - Offline Queue]', eventName, params);
             return;
         }
 
-        try {
-            FirebaseAnalytics.logEvent(eventData);
-            console.log('[Analytics - Sent]', eventName, params);
-        } catch (error) {
-            // Fallback or ignore
-            console.warn('[Analytics - Fail]', error);
+        // Use Promise to handle potential async errors without crashing
+        Promise.resolve().then(() => {
+            return FirebaseAnalytics.logEvent(eventData);
+        }).then(() => {
+            // console.log('[Analytics - Sent]', eventName, params);
+        }).catch(error => {
+            // Suppress repeated errors in dev log
+            // console.warn('[Analytics - Fail]', error);
             this.eventQueue.push(eventData);
-        }
+        });
     }
 
     flushQueue() {
