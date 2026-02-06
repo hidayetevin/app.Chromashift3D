@@ -199,9 +199,12 @@ Checkpoint = Her 10. engel
 - **Position:** 
   - X: 0
   - Y: Player.y + 5 (smooth lerp)
-  - Z: 12
+  - Z: 12 (Base) - *Dynamic on Mobile (Responsive)*
 - **LookAt:** Player position
 - **Tilt:** 5° yukarı bakış
+- **Responsiveness:**
+  - Screen Width < Height (Portrait) ise Z mesafesi artar.
+  - Hedef: Minimum 9 birim genişliği her zaman ekrana sığdırmak.
 
 ### Kamera Davranışları
 - **Follow Speed:** Lerp(0.1) - yumuşak takip
