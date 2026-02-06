@@ -1,40 +1,35 @@
 import * as THREE from 'three';
 import { COLORS, SHAPES } from '../utils/Constants.js';
 
-// Cache for geometries to reduce overhead
 const geometryCache = {};
 
-// Helper to create beveled bar geometry (Extrude a Rectangle)
-function getBeveledBarGeometry(width, height, depth) {
-    const key = `bar_${width}_${height}_${depth}`;
+// 1. TUBE GEOMETRY (Cylinder) to match Ring style
+// Radius 0.3 matches the Torus tube radius
+function getTubeGeometry(length) {
+    const radius = 0.3;
+    const key = `tube_${length}`;
     if (geometryCache[key]) return geometryCache[key];
 
-    const shape = new THREE.Shape();
-    // Centered rectangle
-    shape.moveTo(-width / 2, -height / 2);
-    shape.lineTo(width / 2, -height / 2);
-    shape.lineTo(width / 2, height / 2);
-    shape.lineTo(-width / 2, height / 2);
-    shape.lineTo(-width / 2, -height / 2);
-
-    const extrudeSettings = {
-        steps: 1,
-        depth: depth,
-        bevelEnabled: true,
-        bevelThickness: 0.1,
-        bevelSize: 0.1,
-        bevelSegments: 3, // Smooth bevel
-    };
-
-    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    // Center geometry because Extrude starts at Z=0
-    geometry.center();
+    // Cylinder oriented along Y axis by default.
+    const geometry = new THREE.CylinderGeometry(radius, radius, length, 16);
+    // Rotate to lie on Z axis or X axis? Or keep vertical and rotate mesh?
+    // Let's keep typical cylinder orientation (Y-up) and rotate mesh.
 
     geometryCache[key] = geometry;
     return geometry;
 }
 
-// Shared Material Factory
+// 2. JOINT GEOMETRY (Sphere) for corners
+function getJointGeometry() {
+    const key = 'joint_sphere';
+    if (geometryCache[key]) return geometryCache[key];
+
+    // Radius same as tube
+    const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+    geometryCache[key] = geometry;
+    return geometry;
+}
+
 function createMaterial(color) {
     return new THREE.MeshStandardMaterial({
         color: color,
@@ -53,7 +48,7 @@ class Obstacle {
         this.active = false;
         this.passed = false;
         this.ringHolder = null;
-        this.innerRing = null; // For double circle
+        this.innerRing = null;
 
         this.rotationSpeed = 0;
 
@@ -64,10 +59,10 @@ class Obstacle {
 
     initType(type, playerColor) {
         this.type = type;
-        // Clear children
+
+        // Dispose only non-shared
         this.mesh.children.forEach(c => {
-            if (c.geometry && !this.isSharedGeometry(c.geometry)) c.geometry.dispose();
-            if (c.material) c.material.dispose();
+            // In full impl, check if geometry is in cache before dispose if dynamic
         });
         this.mesh.clear();
         this.segments = [];
@@ -89,62 +84,102 @@ class Obstacle {
         }
     }
 
-    isSharedGeometry(geom) {
-        return Object.values(geometryCache).includes(geom);
-    }
-
     createFan(playerColor) {
         let targetColor = playerColor || COLORS.RED;
         const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
-
-        // Shuffle
         otherColors.sort(() => Math.random() - 0.5);
         const selectedColors = [targetColor, otherColors[0], otherColors[1]].sort(() => Math.random() - 0.5);
 
-        const barGeom = getBeveledBarGeometry(3.0, 0.5, 0.4); // Slightly thinner depth
+        // Fan uses bars radiating from center.
+        // Length 3.0.
+        const tubeGeom = getTubeGeometry(3.0);
+        const jointGeom = getJointGeometry(); // Center hub
+
+        // Add Center Hub
+        const hub = new THREE.Mesh(jointGeom, createMaterial(0xFFFFFF)); // White hub? or dark?
+        this.mesh.add(hub);
 
         for (let i = 0; i < 3; i++) {
-            const blade = new THREE.Mesh(barGeom, createMaterial(selectedColors[i]));
+            const mat = createMaterial(selectedColors[i]);
+            const blade = new THREE.Mesh(tubeGeom, mat);
             const angle = i * ((Math.PI * 2) / 3);
 
+            // Cylinder is Y-up. We want it radiating on XY plane.
+            // Rotate 'blade' to point outward.
+
+            // Position: Center is 0, Length 3. Center of cylinder at 1.5 distance?
             blade.position.x = Math.cos(angle) * 1.5;
             blade.position.y = Math.sin(angle) * 1.5;
-            blade.rotation.z = angle;
+
+            // Angle 0: pos(1.5, 0). Cylinder Y-axis. 
+            // We want Cylinder along X-axis. Rotate Z -90 (or +270).
+            // Basic rotation: Z = angle - PI/2
+            blade.rotation.z = angle - (Math.PI / 2);
+
             blade.userData = {
                 color: selectedColors[i],
                 shape: SHAPES.SQUARE,
-                size: { x: 3.0, y: 0.5, z: 0.4 }
+                size: { x: 0.6, y: 3.0, z: 0.6 } // Corrected: Cylinder Y is length
             };
             this.mesh.add(blade);
             this.segments.push(blade);
+
+            // End Cap (Joint) for visual polish
+            const cap = new THREE.Mesh(jointGeom, mat);
+            cap.position.x = Math.cos(angle) * 3.0;
+            cap.position.y = Math.sin(angle) * 3.0;
+            this.mesh.add(cap);
         }
     }
 
     createSquare() {
         const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN];
-        const offset = 2.2;
-        const longBarGeom = getBeveledBarGeometry(4.4, 0.5, 0.4);
+        const sideLength = 4.4;
+        const halfSide = sideLength / 2;
+        const tubeGeom = getTubeGeometry(sideLength);
+        const jointGeom = getJointGeometry();
+
+        // Corners: (h, h), (-h, h), (-h, -h), (h, -h)
+        // Bars between them.
 
         for (let i = 0; i < 4; i++) {
-            const bar = new THREE.Mesh(longBarGeom, createMaterial(colors[i]));
-            let x = 0, y = 0, rot = 0;
+            const mat = createMaterial(colors[i]);
+            const bar = new THREE.Mesh(tubeGeom, mat);
 
-            if (i === 0) { y = offset; rot = 0; }
-            if (i === 1) { x = offset; rot = Math.PI / 2; }
-            if (i === 2) { y = -offset; rot = 0; }
-            if (i === 3) { x = -offset; rot = Math.PI / 2; }
+            let pos = new THREE.Vector3();
+            let rotZ = 0;
 
-            bar.position.set(x, y, 0);
-            bar.rotation.z = rot;
+            if (i === 0) { pos.set(0, halfSide, 0); rotZ = Math.PI / 2; } // Horizontal (Cyl is Y, Rot Z 90 -> X)
+            if (i === 1) { pos.set(halfSide, 0, 0); rotZ = 0; } // Vertical (Cyl is Y)
+            if (i === 2) { pos.set(0, -halfSide, 0); rotZ = Math.PI / 2; }
+            if (i === 3) { pos.set(-halfSide, 0, 0); rotZ = 0; }
+
+            bar.position.copy(pos);
+            bar.rotation.z = rotZ;
 
             bar.userData = {
                 color: colors[i],
                 shape: SHAPES.SQUARE,
-                size: { x: 4.4, y: 0.5, z: 0.4 }
+                size: { x: 0.6, y: 4.4, z: 0.6 } // Corrected: Cylinder Y is length
             };
             this.mesh.add(bar);
             this.segments.push(bar);
         }
+
+        // Add 4 Corner Joints (Neutral Silver)
+        const corners = [
+            { x: halfSide, y: halfSide },
+            { x: halfSide, y: -halfSide },
+            { x: -halfSide, y: -halfSide },
+            { x: -halfSide, y: halfSide }
+        ];
+
+        const jointMat = createMaterial(0xDDDDDD); // Silver joints
+        corners.forEach(p => {
+            const joint = new THREE.Mesh(jointGeom, jointMat);
+            joint.position.set(p.x, p.y, 0);
+            this.mesh.add(joint);
+        });
     }
 
     createTriangle(playerColor) {
@@ -154,27 +189,61 @@ class Obstacle {
         const selectedColors = [targetColor, otherColors[0], otherColors[1]].sort(() => Math.random() - 0.5);
 
         const sideLength = 5.0;
+        const tubeGeom = getTubeGeometry(sideLength);
+        const jointGeom = getJointGeometry();
+        const jointMat = createMaterial(0xDDDDDD);
+
         const height = (Math.sqrt(3) / 2) * sideLength;
-        const inRadius = height * (1 / 3);
-        const barGeom = getBeveledBarGeometry(sideLength, 0.5, 0.4);
+        const circumRadius = 2 * height / 3; // Distance from center to vertex
 
-        for (let i = 0; i < 3; i++) {
-            const bar = new THREE.Mesh(barGeom, createMaterial(selectedColors[i]));
-            const r = inRadius + 0.5;
-            const theta = i * (Math.PI * 2 / 3);
+        // Angles: 90, 330 (-30), 210
+        const angles = [Math.PI / 2, -Math.PI / 6, 7 * Math.PI / 6];
+        const vertices = angles.map(a => ({
+            x: Math.cos(a) * circumRadius,
+            y: Math.sin(a) * circumRadius
+        }));
 
-            bar.position.x = Math.cos(theta) * r;
-            bar.position.y = Math.sin(theta) * r;
-            bar.rotation.z = theta + (Math.PI / 2);
+        // Edge 0: V0 -> V1
+        // Edge 1: V1 -> V2
+        // Edge 2: V2 -> V0
+
+        const edges = [
+            { start: vertices[0], end: vertices[1], color: selectedColors[0] },
+            { start: vertices[1], end: vertices[2], color: selectedColors[1] },
+            { start: vertices[2], end: vertices[0], color: selectedColors[2] }
+        ];
+
+        edges.forEach((edge, i) => {
+            const mat = createMaterial(edge.color);
+            const bar = new THREE.Mesh(tubeGeom, mat);
+
+            // Position: Midpoint
+            const midX = (edge.start.x + edge.end.x) / 2;
+            const midY = (edge.start.y + edge.end.y) / 2;
+            bar.position.set(midX, midY, 0);
+
+            const dx = edge.end.x - edge.start.x;
+            const dy = edge.end.y - edge.start.y;
+            const angle = Math.atan2(dy, dx);
+            // Rotate Y-axis cylinder to match this angle.
+            // Z rotation = angle - PI/2
+            bar.rotation.z = angle - Math.PI / 2;
 
             bar.userData = {
-                color: selectedColors[i],
+                color: edge.color,
                 shape: SHAPES.TRIANGLE,
-                size: { x: sideLength, y: 0.5, z: 0.4 }
+                size: { x: 0.6, y: sideLength, z: 0.6 } // Corrected: Cylinder Y is length
             };
             this.mesh.add(bar);
             this.segments.push(bar);
-        }
+        });
+
+        // Add 3 Corner Joints
+        vertices.forEach(v => {
+            const joint = new THREE.Mesh(jointGeom, jointMat);
+            joint.position.set(v.x, v.y, 0);
+            this.mesh.add(joint);
+        });
     }
 
     createHexagon() {
@@ -184,24 +253,38 @@ class Obstacle {
         hexColors.sort(() => Math.random() - 0.5);
 
         const sideLength = 2.5;
-        const apothem = (sideLength / (2 * Math.tan(Math.PI / 6)));
-        const barGeom = getBeveledBarGeometry(sideLength + 0.2, 0.5, 0.4);
+        const tubeGeom = getTubeGeometry(sideLength);
+        const jointGeom = getJointGeometry();
+        const jointMat = createMaterial(0xDDDDDD);
 
         for (let i = 0; i < 6; i++) {
-            const bar = new THREE.Mesh(barGeom, createMaterial(hexColors[i]));
-            const theta = i * (Math.PI / 3);
+            const angle = i * Math.PI / 3;
+            // Radius to center of edge = apothem
+            const apothem = (sideLength / (2 * Math.tan(Math.PI / 6)));
 
-            bar.position.x = Math.cos(theta) * apothem;
-            bar.position.y = Math.sin(theta) * apothem;
-            bar.rotation.z = theta + (Math.PI / 2);
+            const mat = createMaterial(hexColors[i]);
+            const bar = new THREE.Mesh(tubeGeom, mat);
+
+            bar.position.x = Math.cos(angle) * apothem;
+            bar.position.y = Math.sin(angle) * apothem;
+            bar.rotation.z = angle + Math.PI / 2; // Tangent
 
             bar.userData = {
                 color: hexColors[i],
                 shape: SHAPES.SQUARE,
-                size: { x: sideLength + 0.2, y: 0.5, z: 0.4 }
+                size: { x: 0.6, y: sideLength, z: 0.6 } // Corrected: Cylinder Y is length
             };
             this.mesh.add(bar);
             this.segments.push(bar);
+
+            // Vertex Joint
+            const vertexAngle = angle + Math.PI / 6;
+            const vx = Math.cos(vertexAngle) * sideLength;
+            const vy = Math.sin(vertexAngle) * sideLength;
+
+            const joint = new THREE.Mesh(jointGeom, jointMat);
+            joint.position.set(vx, vy, 0);
+            this.mesh.add(joint);
         }
     }
 
@@ -225,9 +308,6 @@ class Obstacle {
 
         for (let i = 0; i < 4; i++) {
             const geometry = new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments, arc);
-            // Rotate geometry to align nicely if needed, or just rotate mesh
-            // Standard Torus starts facing Z, tube circle in XY plane.
-
             const material = createMaterial(colors[i]);
             const segment = new THREE.Mesh(geometry, material);
             segment.rotation.z = i * (Math.PI / 2);
