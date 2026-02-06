@@ -1,10 +1,49 @@
 import * as THREE from 'three';
 import { COLORS, SHAPES } from '../utils/Constants.js';
 
-// Helper to create geometries
-const geoms = {
-    bar: new THREE.BoxGeometry(3, 0.5, 0.5)
-};
+// Cache for geometries to reduce overhead
+const geometryCache = {};
+
+// Helper to create beveled bar geometry (Extrude a Rectangle)
+function getBeveledBarGeometry(width, height, depth) {
+    const key = `bar_${width}_${height}_${depth}`;
+    if (geometryCache[key]) return geometryCache[key];
+
+    const shape = new THREE.Shape();
+    // Centered rectangle
+    shape.moveTo(-width / 2, -height / 2);
+    shape.lineTo(width / 2, -height / 2);
+    shape.lineTo(width / 2, height / 2);
+    shape.lineTo(-width / 2, height / 2);
+    shape.lineTo(-width / 2, -height / 2);
+
+    const extrudeSettings = {
+        steps: 1,
+        depth: depth,
+        bevelEnabled: true,
+        bevelThickness: 0.1,
+        bevelSize: 0.1,
+        bevelSegments: 3, // Smooth bevel
+    };
+
+    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    // Center geometry because Extrude starts at Z=0
+    geometry.center();
+
+    geometryCache[key] = geometry;
+    return geometry;
+}
+
+// Shared Material Factory
+function createMaterial(color) {
+    return new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 0.3,
+        metalness: 0.2,
+        emissive: color,
+        emissiveIntensity: 0.2
+    });
+}
 
 class Obstacle {
     constructor(type) {
@@ -18,10 +57,6 @@ class Obstacle {
 
         this.rotationSpeed = 0;
 
-        // Note: We don't call initType here if we expect 'playerColor' to be passed later.
-        // But for initial pool creation, we might not have it.
-        // ObstaclePool calls initType explicitly.
-        // So we can leave it empty or init default.
         if (type) {
             this.initType(type);
         }
@@ -31,7 +66,8 @@ class Obstacle {
         this.type = type;
         // Clear children
         this.mesh.children.forEach(c => {
-            if (c.geometry) c.geometry.dispose();
+            if (c.geometry && !this.isSharedGeometry(c.geometry)) c.geometry.dispose();
+            if (c.material) c.material.dispose();
         });
         this.mesh.clear();
         this.segments = [];
@@ -53,30 +89,22 @@ class Obstacle {
         }
     }
 
-    createFan(playerColor) {
-        // We ALWAYS need the player's current color to be present in the fan blades
-        let targetColor = playerColor;
-        if (!targetColor) targetColor = COLORS.RED;
+    isSharedGeometry(geom) {
+        return Object.values(geometryCache).includes(geom);
+    }
 
+    createFan(playerColor) {
+        let targetColor = playerColor || COLORS.RED;
         const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
 
-        // Shuffle other colors
-        for (let i = otherColors.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [otherColors[i], otherColors[j]] = [otherColors[j], otherColors[i]];
-        }
+        // Shuffle
+        otherColors.sort(() => Math.random() - 0.5);
+        const selectedColors = [targetColor, otherColors[0], otherColors[1]].sort(() => Math.random() - 0.5);
 
-        // Pick 2 random colors to accompany
-        const selectedColors = [targetColor, otherColors[0], otherColors[1]];
-
-        // Shuffle FINAL selection
-        for (let i = selectedColors.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [selectedColors[i], selectedColors[j]] = [selectedColors[j], selectedColors[i]];
-        }
+        const barGeom = getBeveledBarGeometry(3.0, 0.5, 0.4); // Slightly thinner depth
 
         for (let i = 0; i < 3; i++) {
-            const blade = new THREE.Mesh(geoms.bar, new THREE.MeshLambertMaterial({ color: selectedColors[i] }));
+            const blade = new THREE.Mesh(barGeom, createMaterial(selectedColors[i]));
             const angle = i * ((Math.PI * 2) / 3);
 
             blade.position.x = Math.cos(angle) * 1.5;
@@ -85,7 +113,7 @@ class Obstacle {
             blade.userData = {
                 color: selectedColors[i],
                 shape: SHAPES.SQUARE,
-                size: { x: 3.0, y: 0.5, z: 0.5 }
+                size: { x: 3.0, y: 0.5, z: 0.4 }
             };
             this.mesh.add(blade);
             this.segments.push(blade);
@@ -94,12 +122,11 @@ class Obstacle {
 
     createSquare() {
         const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN];
-        // Increased offset (2.2)
         const offset = 2.2;
-        const longBarGeom = new THREE.BoxGeometry(4.4, 0.5, 0.5);
+        const longBarGeom = getBeveledBarGeometry(4.4, 0.5, 0.4);
 
         for (let i = 0; i < 4; i++) {
-            const bar = new THREE.Mesh(longBarGeom, new THREE.MeshLambertMaterial({ color: colors[i] }));
+            const bar = new THREE.Mesh(longBarGeom, createMaterial(colors[i]));
             let x = 0, y = 0, rot = 0;
 
             if (i === 0) { y = offset; rot = 0; }
@@ -113,7 +140,7 @@ class Obstacle {
             bar.userData = {
                 color: colors[i],
                 shape: SHAPES.SQUARE,
-                size: { x: 4.4, y: 0.5, z: 0.5 }
+                size: { x: 4.4, y: 0.5, z: 0.4 }
             };
             this.mesh.add(bar);
             this.segments.push(bar);
@@ -121,36 +148,18 @@ class Obstacle {
     }
 
     createTriangle(playerColor) {
-        // Ensure player color is present
-        let targetColor = playerColor;
-        if (!targetColor) targetColor = COLORS.RED;
-
+        let targetColor = playerColor || COLORS.RED;
         const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
+        otherColors.sort(() => Math.random() - 0.5);
+        const selectedColors = [targetColor, otherColors[0], otherColors[1]].sort(() => Math.random() - 0.5);
 
-        // Shuffle other colors
-        for (let i = otherColors.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [otherColors[i], otherColors[j]] = [otherColors[j], otherColors[i]];
-        }
-
-        // Pick 2 random colors to accompany
-        const selectedColors = [targetColor, otherColors[0], otherColors[1]];
-
-        // Shuffle FINAL selection
-        for (let i = selectedColors.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [selectedColors[i], selectedColors[j]] = [selectedColors[j], selectedColors[i]];
-        }
-
-        // Approx side length
         const sideLength = 5.0;
         const height = (Math.sqrt(3) / 2) * sideLength;
         const inRadius = height * (1 / 3);
-        const barGeom = new THREE.BoxGeometry(sideLength, 0.5, 0.5);
+        const barGeom = getBeveledBarGeometry(sideLength, 0.5, 0.4);
 
         for (let i = 0; i < 3; i++) {
-            const bar = new THREE.Mesh(barGeom, new THREE.MeshLambertMaterial({ color: selectedColors[i] }));
-
+            const bar = new THREE.Mesh(barGeom, createMaterial(selectedColors[i]));
             const r = inRadius + 0.5;
             const theta = i * (Math.PI * 2 / 3);
 
@@ -161,7 +170,7 @@ class Obstacle {
             bar.userData = {
                 color: selectedColors[i],
                 shape: SHAPES.TRIANGLE,
-                size: { x: sideLength, y: 0.5, z: 0.5 }
+                size: { x: sideLength, y: 0.5, z: 0.4 }
             };
             this.mesh.add(bar);
             this.segments.push(bar);
@@ -176,10 +185,10 @@ class Obstacle {
 
         const sideLength = 2.5;
         const apothem = (sideLength / (2 * Math.tan(Math.PI / 6)));
-        const barGeom = new THREE.BoxGeometry(sideLength + 0.2, 0.5, 0.5);
+        const barGeom = getBeveledBarGeometry(sideLength + 0.2, 0.5, 0.4);
 
         for (let i = 0; i < 6; i++) {
-            const bar = new THREE.Mesh(barGeom, new THREE.MeshLambertMaterial({ color: hexColors[i] }));
+            const bar = new THREE.Mesh(barGeom, createMaterial(hexColors[i]));
             const theta = i * (Math.PI / 3);
 
             bar.position.x = Math.cos(theta) * apothem;
@@ -189,7 +198,7 @@ class Obstacle {
             bar.userData = {
                 color: hexColors[i],
                 shape: SHAPES.SQUARE,
-                size: { x: sideLength + 0.2, y: 0.5, z: 0.5 }
+                size: { x: sideLength + 0.2, y: 0.5, z: 0.4 }
             };
             this.mesh.add(bar);
             this.segments.push(bar);
@@ -212,13 +221,14 @@ class Obstacle {
         const radialSegments = 16;
         const tubularSegments = 32;
         const arc = Math.PI / 2;
-        const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN];
-        // Fixed pattern or random? Standard ring uses specific order usually but let's randomize
-        colors.sort(() => Math.random() - 0.5);
+        const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
 
         for (let i = 0; i < 4; i++) {
             const geometry = new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments, arc);
-            const material = new THREE.MeshLambertMaterial({ color: colors[i] });
+            // Rotate geometry to align nicely if needed, or just rotate mesh
+            // Standard Torus starts facing Z, tube circle in XY plane.
+
+            const material = createMaterial(colors[i]);
             const segment = new THREE.Mesh(geometry, material);
             segment.rotation.z = i * (Math.PI / 2);
             segment.userData = { color: colors[i] };
@@ -233,8 +243,6 @@ class Obstacle {
     }
 
     createRing() {
-        // Standard single ring wrapper for createRingGeometry or standalone
-        // To keep back-compat and exact logic:
         this.createRingGeometry(2.2);
     }
 
@@ -252,7 +260,6 @@ class Obstacle {
             this.mesh.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
 
             if (this.innerRing) {
-                // Rotate inner ring in opposite direction locally
                 this.innerRing.rotation.z -= THREE.MathUtils.degToRad(this.rotationSpeed * 2.5) * deltaTime;
             }
         }
