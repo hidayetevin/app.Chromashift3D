@@ -2,9 +2,11 @@ class UIManager {
     constructor() {
         this.screens = {
             start: document.getElementById('start-screen'),
-            hud: document.getElementById('ui-layer'), // General container
+            hud: document.getElementById('ui-layer'),
             tutorial: document.getElementById('tutorial-overlay'),
-            score: document.getElementById('score')
+            score: document.getElementById('score'),
+            bestScore: document.getElementById('best-score'),
+            bestHud: document.getElementById('best-val')
         };
 
         this.setupEventListeners();
@@ -12,21 +14,30 @@ class UIManager {
 
     setupEventListeners() {
         document.getElementById('start-btn').addEventListener('click', () => {
-            // Handled in main.js
+            // Logic handled in main.js
         });
     }
 
-    showStartScreen() {
+    showStartScreen(bestScore = 0) {
         this.screens.start.style.display = 'flex';
         this.screens.tutorial.style.display = 'none';
+        this.updateBestScore(bestScore);
     }
 
     hideStartScreen() {
-        this.screens.start.style.display = 'none';
+        this.screens.start.style.opacity = '0';
+        setTimeout(() => {
+            this.screens.start.style.display = 'none';
+        }, 400);
     }
 
     updateScore(score) {
         if (this.screens.score) this.screens.score.innerText = score;
+    }
+
+    updateBestScore(best) {
+        if (this.screens.bestScore) this.screens.bestScore.innerText = best;
+        if (this.screens.bestHud) this.screens.bestHud.innerText = best;
     }
 
     showTutorial(text) {
@@ -40,20 +51,21 @@ class UIManager {
     }
 
     showGameOver(score, bestScore) {
-        // Create dynamic Game Over div if not exists
         let goScreen = document.getElementById('game-over-screen');
         if (!goScreen) {
             goScreen = document.createElement('div');
             goScreen.id = 'game-over-screen';
-            Object.assign(goScreen.style, {
-                position: 'absolute', top: '0', left: '0', width: '100%', height: '100%',
-                background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column',
-                justifyContent: 'center', alignItems: 'center', color: 'white', zIndex: '100'
-            });
             goScreen.innerHTML = `
-                <h1>GAME OVER</h1>
-                <h2>Score: <span id='go-score'></span></h2>
-                <button id='restart-btn' style='padding:15px 30px; font-size:20px; background:#34C759; border:none; border-radius:10px; color:white; margin-top:20px;'>TRY AGAIN</button>
+                <h1 class="game-over-title">GAME OVER</h1>
+                <div class="stat-container">
+                    <span class="stat-label">SCORE</span>
+                    <span id="go-score" class="stat-value">0</span>
+                    <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                        <span class="stat-label">BEST</span>
+                        <span id="go-best" class="stat-value" style="font-size: 24px; color: var(--accent);">0</span>
+                    </div>
+                </div>
+                <button id="restart-btn" class="glow-button">TRY AGAIN</button>
             `;
             document.body.appendChild(goScreen);
 
@@ -63,6 +75,7 @@ class UIManager {
         }
 
         document.getElementById('go-score').innerText = score;
+        document.getElementById('go-best').innerText = bestScore;
         goScreen.style.display = 'flex';
     }
 }

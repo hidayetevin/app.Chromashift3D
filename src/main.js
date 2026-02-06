@@ -23,7 +23,6 @@ async function bootstrap() {
     // 3. UI Bindings
     const startBtn = document.getElementById('start-btn');
     startBtn.addEventListener('click', () => {
-        document.getElementById('start-screen').style.display = 'none';
         Game.start();
         Analytics.track('game_start');
     });

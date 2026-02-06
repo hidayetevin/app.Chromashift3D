@@ -21,6 +21,9 @@ class Game {
         this.gameTime = 0;
         this.lastFrameTime = 0;
         this.hasRevived = false;
+
+        // Load High Score
+        this.bestScore = parseInt(localStorage.getItem('chromashift_best') || '0');
     }
 
     init() {
@@ -28,6 +31,9 @@ class Game {
         ParticleSystem.init(SceneManager.scene);
         this.player = new Player(SceneManager.scene);
         this.obstacleManager = new ObstacleManager(SceneManager.scene);
+
+        // UI Initial state
+        UIManager.showStartScreen(this.bestScore);
 
         // Input
         document.addEventListener('touchstart', (e) => this.handleInput(e), { passive: false });
@@ -204,8 +210,14 @@ class Game {
     }
 
     showFinalGameOver() {
+        // Handle High Score
+        if (this.score > this.bestScore) {
+            this.bestScore = this.score;
+            localStorage.setItem('chromashift_best', this.bestScore.toString());
+        }
+
         AdsManager.showInterstitial();
-        UIManager.showGameOver(this.score);
+        UIManager.showGameOver(this.score, this.bestScore);
     }
 
     reviveGame() {
