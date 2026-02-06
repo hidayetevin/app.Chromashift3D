@@ -58,17 +58,36 @@ class CollisionDetector {
                 }
 
             } else {
-                // EXISTING LOGIC FOR OTHER OBSTACLES (e.g. Fan)
-                // For 'fan', segments are physically offset from center, so this works better.
-                const obstacleRadius = 0.3; // Generic approximate radius for block/box parts
+                // BOX COLLISION LOGIC For 'fan' and 'square' (Oriented Bounding Box - OBB)
 
                 for (let segment of obs.segments) {
-                    const segmentPos = new THREE.Vector3();
-                    segment.getWorldPosition(segmentPos);
+                    // Update matrix world to be sure
+                    segment.updateMatrixWorld();
 
-                    const dist = playerPos.distanceTo(segmentPos);
+                    // Get geometric properties
+                    // Default size if not set: 3 x 0.5 x 0.5
+                    const size = segment.userData.size || { x: 3, y: 0.5, z: 0.5 };
+                    const halfSize = new THREE.Vector3(size.x / 2, size.y / 2, size.z / 2);
 
-                    if (dist < (playerRadius + obstacleRadius)) {
+                    // Transform player position into local space of the segment
+                    const localPlayerPos = playerPos.clone();
+                    segment.worldToLocal(localPlayerPos);
+
+                    // AABB Collision Check in Local Space (simplifies OBB check)
+                    // Check if player's sphere intersects the local AABB of the bar
+
+                    // Find closest point on the AABB to the sphere center
+                    const closestPoint = new THREE.Vector3();
+                    closestPoint.copy(localPlayerPos);
+                    closestPoint.clamp(
+                        halfSize.clone().negate(), // min (-x, -y, -z)
+                        halfSize                   // max (+x, +y, +z)
+                    );
+
+                    // Distance from closest point to sphere center
+                    const distance = localPlayerPos.distanceTo(closestPoint);
+
+                    if (distance < playerRadius) {
                         return {
                             hit: true,
                             obstacle: obs,

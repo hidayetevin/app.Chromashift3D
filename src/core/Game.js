@@ -85,7 +85,7 @@ class Game {
         this.gameTime += deltaTime;
 
         PhysicsEngine.update(this.player, deltaTime);
-        this.obstacleManager.update(deltaTime, this.player.position, this.score);
+        this.obstacleManager.update(deltaTime, this.player, this.score);
         ThemeManager.checkTransition(this.score);
 
         const collision = CollisionDetector.check(this.player, this.obstacleManager.getObstacles());
