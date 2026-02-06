@@ -13,8 +13,8 @@ class CollisionDetector {
 
             if (obs.type === 'ring') {
                 // RING COLLISION LOGIC
-                // Ring geometry: Radius 2.0, Tube 0.3
-                const ringRadius = 2.0;
+                // Ring geometry: Radius 2.2, Tube 0.3
+                const ringRadius = 2.5;
                 const tubeRadius = 0.3;
 
                 // Distance from player to obstacle center
