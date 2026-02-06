@@ -9,9 +9,9 @@ class Player {
 
         // Setup Geometry mapping
         this.geometries = {
-            [SHAPES.CIRCLE]: new THREE.SphereGeometry(0.5, 32, 32),
-            [SHAPES.SQUARE]: new THREE.BoxGeometry(0.9, 0.9, 0.9),
-            [SHAPES.TRIANGLE]: new THREE.TetrahedronGeometry(0.7)
+            [SHAPES.CIRCLE]: new THREE.SphereGeometry(0.3, 32, 32), // Reduced from 0.5
+            [SHAPES.SQUARE]: new THREE.BoxGeometry(0.5, 0.5, 0.5), // Reduced relative size
+            [SHAPES.TRIANGLE]: new THREE.TetrahedronGeometry(0.4) // Reduced relative size
         };
 
         // Initial State

@@ -31,43 +31,26 @@ class ObstacleManager {
         let type = Math.random() > 0.5 ? 'ring' : 'fan';
 
         let spawnY = this.nextSpawnY;
+        let spawnX = 0; // Default X
 
         // Custom Positioning Logic per User Request:
-        // - "Çarpı (Fan) ise topun merkezinden rastgele +/- top çapı kadar Y ekseninde oynasın"
+        // "Çarpı türü engelleri topun çapı kadar sağa veya sola kaydır"
         // - Player Radius ~ 0.5. Diameter = 1.0.
-        // - So offset = +1.0 OR -1.0.
+        // - Offset = +/- 1.0 on X Axis.
 
         if (type === 'fan') {
-            const offset = (Math.random() > 0.5 ? 1.0 : -1.0);
-            // Wait, "Y ekseninde oynasın". 
-            // Our game is vertical. Y is the progression axis.
-            // If we offset Y, we just move the obstacle up/down in the spawn sequence.
-            // Maybe user meant X or Z? (Lateral movement).
-            // "Topun merkez noktasından... Y ekseninde oynasın".
-            // If the obstacle center is shifted Y, and it spins around Z, the collision point changes?
-            // Yes. A fan rotating around (0, Y+offset) means the blades will be higher/lower.
-            // But since Player moves UP (Y), shifting obstacle Y just changes WHEN we hit it, not WHERE relative to center.
-            // UNLESS the user means "Topun geçeceği boşluk" Y ekseninde (which is vertical) kalsın...
-
-            // Let's re-read carefully: "engelY = engelMerkez + top çapı".
-            // Since movement is Vertical (Y), shifting Y just changes the spacing.
-            // MAYBE the user thinks the game is Horizontal (Runner)?
-            // NO, we established Vertical.
-            // Or maybe "Merkezden çarpışma" sorununu çözmek için...
-            // Ah, if the fan center is exactly at Jump Peak?
-
-            // Or maybe user meant X axis (Left/Right)?
-            // "Y ekseninde oynasın" explicitly said Y.
-            // Okay, I will apply Y offset.
-            spawnY += offset;
+            // Updated diameter offset based on new radius 0.3 -> Diameter 0.6
+            const offset = (Math.random() > 0.5 ? 0.6 : -0.6);
+            spawnX = offset;
         } else {
-            // Ring type stays as is (Centered at spawnY)
+            // Ring type stays as is (Centered at X=0)
         }
 
         // Rotation Speed
         let rotationSpeed = 50 + (score * 2);
 
         const obs = this.pool.get(type, spawnY, rotationSpeed);
+        obs.mesh.position.x = spawnX; // Apply X offset
 
         // Increase gap
         this.nextSpawnY += 15;
