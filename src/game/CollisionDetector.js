@@ -2,41 +2,41 @@ import * as THREE from 'three';
 
 class CollisionDetector {
     check(player, obstacles) {
-        const playerRadius = 0.3 * 0.8; // Updated for smaller player (0.3)
+        // EXACT RADIUS (No padding/shrink)
+        // Player Sphere Radius is 0.3 (defined in Player.js)
+        const playerRadius = 0.3;
+
+        // Obstacle Thickness Estimations:
+        // Fan (Box): 0.5 thickness -> 0.25 effective "radius" from center line per axis
+        // Ring (Torus): Tube radius is 0.3.
+        const obstacleRadius = 0.3;
+
         const playerPos = player.position;
         const playerState = player.getCurrentState(); // { color, shape }
 
         for (let obs of obstacles) {
-            // Optimization: Skip if Y distance is too large
+            // Optimization
             if (Math.abs(obs.mesh.position.y - playerPos.y) > 3) continue;
 
-            // Check segments
             for (let segment of obs.segments) {
-                // Get World Position of segment
                 const segmentPos = new THREE.Vector3();
                 segment.getWorldPosition(segmentPos);
 
-                // Distance Check (Sphere Collision)
                 const dist = playerPos.distanceTo(segmentPos);
 
-                // Ring segment collision is tricky with just point distance.
-                // Assuming Torus radius ~3. Tube ~0.3.
-                // If player is within the tube...
-
-                // Simplified for MVP: Distance < threshold
-                if (dist < (playerRadius + 0.3)) {
+                // STRICT TOUCH CHECK
+                // If distance between centers is less than sum of radii -> TOUCH
+                if (dist < (playerRadius + obstacleRadius)) {
                     return {
                         hit: true,
                         obstacle: obs,
                         segment: segment,
-                        matchColor: segment.userData.color === playerState.color,
-                        matchShape: segment.userData.shape === playerState.shape // Assuming shapes are mapped/compared by KEY or Value
+                        matchColor: segment.userData.color === playerState.color
                     };
                 }
             }
         }
-
-        return null; // No collision
+        return null;
     }
 }
 
