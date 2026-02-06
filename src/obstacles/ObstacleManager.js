@@ -31,10 +31,9 @@ class ObstacleManager {
 
     spawnNext(score, playerColor) {
         // Difficulty Logic: Pick random type
-        const rand = Math.random();
-        let type = 'ring';
-        if (rand < 0.33) type = 'fan';
-        else if (rand < 0.66) type = 'square';
+        // Difficulty Logic: Pick random type from expanded set
+        const types = ['ring', 'fan', 'square', 'triangle', 'hexagon', 'double_circle'];
+        const type = types[Math.floor(Math.random() * types.length)];
 
         let spawnY = this.nextSpawnY;
         let spawnX = 0; // Default X
