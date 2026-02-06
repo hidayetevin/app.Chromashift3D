@@ -65,20 +65,29 @@ class Game {
     }
 
     loop(timestamp) {
-        const deltaTime = Math.min((timestamp - this.lastFrameTime) / 1000, 0.1); // Cap delta
-        this.lastFrameTime = timestamp;
+        if (this.gameState === 'ERROR') return;
 
-        if (this.gameState === 'PLAYING') {
-            this.update(deltaTime);
+        try {
+            const deltaTime = Math.min((timestamp - this.lastFrameTime) / 1000, 0.1); // Cap delta
+            this.lastFrameTime = timestamp;
+
+            if (this.gameState === 'PLAYING') {
+                this.update(deltaTime);
+            }
+
+            ThemeManager.update(deltaTime);
+            ParticleSystem.update(deltaTime);
+            updateTween(timestamp);
+            if (this.player) {
+                CameraController.update(this.player.position.y, deltaTime);
+            }
+            SceneManager.render(CameraController.camera);
+
+            requestAnimationFrame((t) => this.loop(t));
+        } catch (error) {
+            console.error("Game Loop Error:", error);
+            this.gameState = 'ERROR';
         }
-
-        ThemeManager.update(deltaTime);
-        ParticleSystem.update(deltaTime);
-        updateTween(timestamp);
-        CameraController.update(this.player.position.y, deltaTime);
-        SceneManager.render(CameraController.camera);
-
-        requestAnimationFrame((t) => this.loop(t));
     }
 
     update(deltaTime) {

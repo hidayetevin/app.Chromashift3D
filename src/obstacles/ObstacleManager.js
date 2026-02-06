@@ -8,8 +8,10 @@ class ObstacleManager {
     }
 
     update(deltaTime, player, score) {
+        if (!player) return;
+
         const playerPosition = player.position;
-        const playerColor = player.getCurrentState().color;
+        const playerColor = player.getCurrentState()?.color;
 
         // Rotate Obstacles (STATIC position, DYNAMIC rotation)
         this.pool.activeObstacles.forEach(obs => {
