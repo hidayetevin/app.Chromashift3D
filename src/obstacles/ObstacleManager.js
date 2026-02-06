@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import ObstaclePool from './ObstaclePool.js';
+import { COLORS } from '../utils/Constants.js';
 
 class ObstacleManager {
     constructor(scene) {
         this.pool = new ObstaclePool(scene, 20);
         this.nextSpawnY = 15; // Start spawning much higher (was 5)
         this.obstaclesSinceSwitch = 0;
+        this.futurePlayerColor = null; // Track expected player color for future obstacles
     }
 
     update(deltaTime, player, score) {
@@ -13,6 +15,11 @@ class ObstacleManager {
 
         const playerPosition = player.position;
         const playerColor = player.getCurrentState()?.color;
+
+        // Init future color if not set (first frame or reset)
+        if (!this.futurePlayerColor && playerColor) {
+            this.futurePlayerColor = playerColor;
+        }
 
         // Rotate Obstacles (STATIC position, DYNAMIC rotation)
         this.pool.activeObstacles.forEach(obs => {
@@ -33,6 +40,9 @@ class ObstacleManager {
     }
 
     spawnNext(score, playerColor) {
+        // Use futurePlayerColor for generation to ensure compatibility with pending switches
+        const generationColor = this.futurePlayerColor || playerColor || COLORS.RED;
+
         let type = '';
         let spawnX = 0;
         let rotationSpeed = 50 + (score * 2);
@@ -60,8 +70,20 @@ class ObstacleManager {
 
         let spawnY = this.nextSpawnY;
 
-        const obs = this.pool.get(type, spawnY, rotationSpeed, playerColor);
+        const obs = this.pool.get(type, spawnY, rotationSpeed, generationColor);
         obs.mesh.position.x = spawnX; // Apply X offset
+
+        if (type === 'color_switcher') {
+            // Determine the target color for this switch
+            const available = Object.values(COLORS).filter(c => c !== generationColor);
+            const nextColor = available[Math.floor(Math.random() * available.length)];
+
+            // Attach to mesh userData for CollisionDetector/Game to use
+            obs.mesh.userData.switchTarget = nextColor;
+
+            // Update future color so NEXT obstacles use this new color
+            this.futurePlayerColor = nextColor;
+        }
 
         // Increase gap
         this.nextSpawnY += 15;
@@ -83,3 +105,6 @@ class ObstacleManager {
 }
 
 export default ObstacleManager;
+
+
+

@@ -108,6 +108,47 @@ class Player {
         this.glowLight.color.setHex(newColor);
 
         ParticleSystem.emit(this.mesh.position, newColor, 15);
+
+        // Trigger visual pulse effect
+        this.triggerColorChangeEffect(newColor);
+    }
+
+    triggerColorChangeEffect(color) {
+        // Create expanding sphere (Pulse Effect)
+        // Start same size as player (radius 0.3) but scaled down to 0.1 initially
+        const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.8, // Start very visible
+            side: THREE.FrontSide,
+            depthWrite: false, // Don't write to depth buffer (better for transparent overlap)
+            blending: THREE.AdditiveBlending // Glowy effect
+        });
+
+        const effectMesh = new THREE.Mesh(geometry, material);
+        effectMesh.position.set(0, 0, 0);
+        // Start from inside (tiny)
+        effectMesh.scale.set(0.1, 0.1, 0.1);
+
+        this.mesh.add(effectMesh);
+
+        // Tween: Expand
+        new Tween(effectMesh.scale)
+            .to({ x: 8, y: 8, z: 8 }, 1200)
+            .easing(Easing.Quadratic.Out)
+            .start();
+
+        // Tween: Fade Out
+        new Tween(material)
+            .to({ opacity: 0 }, 1200)
+            .easing(Easing.Quadratic.Out)
+            .onComplete(() => {
+                this.mesh.remove(effectMesh);
+                geometry.dispose();
+                material.dispose();
+            })
+            .start();
     }
 }
 

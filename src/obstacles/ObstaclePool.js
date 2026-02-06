@@ -14,7 +14,7 @@ class ObstaclePool {
         }
     }
 
-    get(type, yPos, rotationSpeed) {
+    get(type, yPos, rotationSpeed, playerColor) {
         let obs = null;
         if (this.pool.length > 0) {
             obs = this.pool.pop();
@@ -24,7 +24,7 @@ class ObstaclePool {
             this.scene.add(obs.mesh);
         }
 
-        obs.initType(type); // Re-initialize type geometry
+        obs.initType(type, playerColor); // Re-initialize type geometry
         obs.reset();
 
         obs.mesh.position.set(0, yPos, 0);
