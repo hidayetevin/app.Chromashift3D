@@ -1,0 +1,27 @@
+{
+  "name": "chromashift-3d",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^5.0.0",
+    "@capacitor-firebase/analytics": "^5.0.0",
+    "@capacitor/android": "^5.7.8",
+    "@capacitor/app": "^5.0.8",
+    "@capacitor/core": "^5.7.8",
+    "@capacitor/haptics": "^5.0.0",
+    "@capacitor/ios": "^5.7.8",
+    "@capacitor/status-bar": "^5.0.0",
+    "@tweenjs/tween.js": "^25.0.0",
+    "expect": "^30.2.0",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
