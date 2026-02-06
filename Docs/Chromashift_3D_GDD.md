@@ -1,98 +1,72 @@
 # CHROMASHIFT 3D – GAME DESIGN DOCUMENT (GDD)
-## Version 2.0 - COMPLETE EDITION
+## Version 2.1 - UPDATED EDITION (Physics & Sync Fixes)
 
 ## 1. GENEL BAKIŞ
-Chromashift 3D, Color Switch DNA'sını temel alan; **renk + şekil eşleşmesi** ve **dikey tema geçişi** yeniliğiyle ayrışan, tek parmakla oynanan hiper-casual bir mobil oyundur.
+Chromashift 3D, Color Switch DNA'sını temel alan; **renk + şekil eşleşmesi** ve **dikey fizik tabanlı zıplama** mekaniğiyle ayrışan, tek parmakla oynanan hiper-casual bir mobil oyundur.
 
 - **Tür:** Timing / Precision Casual
 - **Platform:** Android 8.0+ & iOS 12+
-- **Teknoloji:** Three.js + WebView / Wrapper
+- **Teknoloji:** Three.js + Vite
 - **Hedef:** Yüksek retention + ödüllü reklam geliri
-- **Target Kitle:** %85+ mobil pazar (modern cihazlar)
 
 ---
 
 ## 2. CORE GAMEPLAY LOOP
-1. Top otomatik olarak zıplar (fizik tabanlı)
-2. Engel aşağıdan yukarı gelir
-3. Oyuncu ekrana dokunur
-4. Top:
-   - Renk değiştirir
-   - Şekil değiştirir (0.2s morph animasyonu)
+1. Top yerçekimi etkisiyle düşer.
+2. Oyuncu ekrana dokunur (Tap) -> Top yukarı zıplar (Jump).
+3. Engeller dikey doğrultuda dizilir.
+4. Oyuncu "Renk Değiştirici" (Color Switcher) içinden geçer:
+   - Topun rengi değişir.
+   - Renk değişimi görsel bir "Pulse" efekti (1.2s) ile desteklenir.
 5. Engel ile eşleşme kontrolü:
-   - Renk + şekil doğruysa → geçiş
-   - Aksi halde → anında kayıp
-6. Skor artar, hız yükselir
-7. Ölüm → reklam / restart
+   - Renk eşleşiyorsa → geçiş.
+   - Yanlış renk → anında kayıp (Game Over).
+6. **Güvenli Alan (Safe Area):** 
+   - Top ekranın altına düşerse veya çok üstüne çıkarsa → Game Over.
+7. Skor artar, engellerin dönme hızı yükselir.
 
 ---
 
 ## 3. KONTROLLER
-- **Tek dokunuş (tap)**
-- Swipe / hold yok
-- Öğrenme süresi: Yok (deneyerek öğrenme)
-- Responsive feedback: Haptic + SFX
+- **Tek dokunuş (tap):** Zıplama (Jump).
+- **Renk/Şekil Değişimi:** Pasif (Switcher engelleri ile yapılır).
+- Kamera sadece yukarı takip eder (Düşerken sabit kalır).
 
 ---
 
 ## 4. RENK SİSTEMİ
 ### Aktif Renkler
-- Kırmızı (#FF3B30)
-- Mavi (#007AFF)
-- Sarı (#FFCC00)
-- Yeşil (#34C759)
+- Kırmızı (0xFF3B30)
+- Mavi (0x007AFF)
+- Sarı (0xFFCC00)
+- Yeşil (0x34C759)
 
 ### Kurallar
-- Top ve engel renkleri eşleşmeli
-- Renk değişimi:
-  - Tap ile sırayla döngü (R→B→Y→G→R)
-  - Checkpoint sonrası aynı renk korunur
-- Renk değişiminde parlama efekti (Particle System)
-
-### Para Birimi (Coins)
-- Oyun içi para birimi "Coins" eklendi.
-- Kazanma Yöntemleri:
-  - Daily Login (7 Günlük döngü)
-  - Video izleme (Optional)
-- Kullanım Alanı:
-  - İlerideki güncellemelerde Skin Unlock için kullanılacak.
+- Top rengi, geçtiği engelin o anki segmentiyle eşleşmeli.
+- **Senkronizasyon:** Color Switcher'lar, bir sonraki engelin rengini önceden belirler ve oyuncuyu o renge dönüştürür.
+- Renk değişiminde genişleyen, opaklığı azalan küre efekti (1.2s sürer).
 
 ---
 
-## 5. ŞEKİL SİSTEMİ (ANA YENİLİK)
+## 5. ŞEKİL SİSTEMİ
 ### Şekiller
 - **Daire** (Circle)
 - **Kare** (Square)
 - **Üçgen** (Triangle)
+- **Beşgen** (Pentagon)
 
 ### Kurallar
-- Engel bir şekil ister
-- Top aynı şekle sahip olmalı
-- Renk doğru, şekil yanlışsa → fail
-
-### Şekil Değişim Animasyonu
-- **Süre:** 0.2 saniye
-- **Tip:** Smooth morph (vertex interpolation)
-- **VFX:** Hafif particle burst
-- **SFX:** Kısa "pop" sesi
+- Bazı engeller (Beşgen, Üçgen, Pervane) **"Çift Kapı"** kuralını kullanır: Yan yana iki segment oyuncu rengiyle aynı olur (Geçiş kolaylığı için).
+- Diğer engeller (Halka, Kare, Çember) 4 rengi de rastgele içerir.
 
 ---
 
 ## 6. FİZİK SİSTEMİ
 ### Manuel Fizik Parametreleri
-- **Gravity:** -9.8 m/s²
-- **Bounce Yüksekliği:** 2.5 units
-- **Bounce Süresi:** 0.8 saniye
-- **Terminal Velocity:** -15 units/s
-- **Lateral Movement:** Yok (sadece dikey)
-
-### Bounce Pattern
-```
-Zıplama Döngüsü:
-- Yükseliş: 0.4s (ease-out)
-- İniş: 0.4s (ease-in)
-- Toplam: 0.8s loop
-```
+- **Gravity:** -20 m/s² (Snappy/hızlı hissiyat)
+- **Bounce Height:** 2.0 units
+- **Terminal Velocity:** -25 units/s
+- **Safe Area:** Kamera odağından ±8.5 birim sapma toleransı.
 
 ---
 
@@ -147,48 +121,22 @@ Checkpoint = Her 10. engel
 
 ## 9. ENGEL TASARIMI
 ### Engel Tipleri
-1. **Rotating Ring** (Döner Halka)
-   - 4 segment (her renk 1)
-   - Rotation speed: 60°/s (başlangıç)
-   
-2. **Shape Gate** (Şekil Kapısı)
-   - Belirli şekil gerektirir
-   - Renk + şekil kombinasyonu
-   
-3. **Narrow Tunnel** (Dar Geçit)
-   - 2 segment seçenek
-   - Yüksek precision gerektirir
+1. **Rotating Ring** (Döner Halka) - 4 segment.
+2. **Square** (Kare) - 4 segment.
+3. **Triangle / Pentagon** - Kapalı geometrik halkalar.
+4. **Fan** (Pervane) - 3 Kanatlı (2'si oyuncu renginde).
+5. **Sliding Bar** (Kayan Çubuklar) - Yatay hareket eden 4 renkli şerit.
+6. **Double Circles** (İkili Çemberler) - Kesişim noktaları senkronize dönen halkalar.
 
-4. **Mixed Combo** (Karma)
-   - Renk + şekil + rotation
-   - 60+ saniye sonra aktif
-
-### Engel Spawn Kuralları
-- İlk 3 engel: Sadece renk eşleşmesi
-- 4+ engel: Renk + şekil aktif
-- Aralık: Başlangıç 3 units, min 1.8 units
-- Spawn hızı: Dinamik (player speed'e göre)
+### Spawn Kuralları
+- Renk Değiştirici: Her 3-7 engel arasında rastgele bir aralıkla (threshold) spawn olur.
+- Hız: `50 + (score * 2)`.
 
 ---
 
 ## 10. TEMA & ORTAM GEÇİŞLERİ
-### Tema Akışı ve Skorlar
-
-| Tema | Aktif Skor Aralığı | Ortam Özellikleri |
-|------|-------------------|-------------------|
-| **1. Grass & Sky** | 0-19 | Yeşil zemin, mavi gökyüzü, hafif bulutlar |
-| **2. Cloud World** | 20-49 | Bulut platformları, beyaz/turkuaz renkler, soft fog |
-| **3. Space** | 50-99 | Koyu uzay, yıldızlar, neon renkler, minimal fog |
-| **4. Void** | 100-149 | Siyah/mor gradient, minimal lighting, yoğun fog |
-| **5. Beyond Void** | 150+ | Psychedelic renkler, distortion, ultimate challenge |
-
-### Tema Geçiş Mekanizması
-- **Geçiş Süresi:** 3 saniye (smooth fade)
-- **Lighting:** Lerp interpolation
-- **Fog:** Yoğunluk değişimi
-- **Arka Plan Rengi:** Gradient blend
-- **SFX:** Tema geçiş sesi (whoosh + ambient)
-- **Checkpoint Bağlantısı:** Tema geçişleri checkpoint'lerde tetiklenir
+- **Tema:** Sabitlendi. Oyun boyunca **"Neon Dark"** teması hakimdir.
+- **Atmosfer:** Karanlık arka plan, neon parlayan engeller ve oyuncu.
 
 ---
 
@@ -207,9 +155,9 @@ Checkpoint = Her 10. engel
   - Hedef: Minimum 9 birim genişliği her zaman ekrana sığdırmak.
 
 ### Kamera Davranışları
-- **Follow Speed:** Lerp(0.1) - yumuşak takip
-- **Death Shake:** 0.3s, amplitude 0.5 units
-- **Theme Transition:** Hafif zoom out (FOV 60→65, 1s)
+- **Takip:** Sadece YUKARI (Math.max). Top düşerken kamera en son yüksekliğinde sabit kalır.
+- **Görüş:** Minimum 9 birim genişliği her zaman kapsayacak şekilde dinamik Z mesafesi.
+- **Shake:** Ölüm anında 0.3s sarsıntı.
 
 ---
 
