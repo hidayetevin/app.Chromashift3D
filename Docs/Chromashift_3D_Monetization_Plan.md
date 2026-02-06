@@ -204,6 +204,11 @@ MVP sonrası feature:
 | Rainbow Theme | 3 reklam | Gökkuşağı renkleri |
 | Galaxy Theme | 3 reklam | Galaksi desen |
 
+### 4.4 Currency (Coins)
+MVP aşamasında "Coins" para birimi eklenmiştir.
+- **Kazanım:** Daily Login, Video İzleme (Opsiyonel)
+- **Harcama:** Gelecek skin market güncellemesinde kullanılacak.
+
 ### 4.4 Unlock Flow
 ```
 Main Menu → Themes → [Locked Theme]
@@ -252,9 +257,29 @@ Exit (5:00 sonra)
 **Monetization Breakdown:**
 - Rewarded Ads: 2 (Run 1, Run 3)
 - Interstitial: 1 (Run 4)
-- Total Revenue: ~$0.06-0.08
+- Total Revenue:Run 5-8: Devam...
+  ↓
+Exit (5:00 sonra)
+```
 
-### 5.2 Zorluk Eğrisi (Retention İçin Optimize)
+### 5.2 Daily Login Rewards (Retention Bouster)
+Her gün oyuna giren kullanıcılar ödüllendirilir. 7 günlük bir döngü kullanılır.
+
+**Döngü Yapısı:**
+1. Gün: 50 Coins
+2. Gün: 100 Coins
+3. Gün: 150 Coins
+4. Gün: 200 Coins
+5. Gün: 250 Coins
+6. Gün: 300 Coins
+7. Gün: **Premium Skin / Büyük Ödül**
+
+**Save System:**
+- `last_login_date` kontrol edilir.
+- Ardışık giriş ise `streak` artar.
+- Kaçırılan gün olursa `streak` sıfırlanır.
+
+### 5.3 Zorluk Eğrisi (Retention İçin Optimize)
 
 | Süre | Oyun Davranışı | Amaç |
 |------|----------------|------|

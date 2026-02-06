@@ -47,7 +47,15 @@ Chromashift 3D, Color Switch DNA'sını temel alan; **renk + şekil eşleşmesi*
 - Renk değişimi:
   - Tap ile sırayla döngü (R→B→Y→G→R)
   - Checkpoint sonrası aynı renk korunur
-- Renk değişiminde parlama efekti
+- Renk değişiminde parlama efekti (Particle System)
+
+### Para Birimi (Coins)
+- Oyun içi para birimi "Coins" eklendi.
+- Kazanma Yöntemleri:
+  - Daily Login (7 Günlük döngü)
+  - Video izleme (Optional)
+- Kullanım Alanı:
+  - İlerideki güncellemelerde Skin Unlock için kullanılacak.
 
 ---
 
@@ -416,6 +424,20 @@ Rotation Speed = 60 + (score / 20) * 15
    - Eski engeller pool'a geri dönüş hızlandırılır
    - Texture cache temizliği
 
+### Tutorial System
+- İlk açılışta oyuncuya temel mekanikleri öğretir.
+- Adımlar:
+  1. Renk Değişimi (Tap)
+  2. Şekil Eşleşmesi
+  3. Başarı Mesajı
+- Durumu `SaveSystem` üzerinden takip edilir (`tutorial_completed`).
+
+### Retention & Rewards
+- **Daily Login Bonus:** 
+  - Oyuncunun her gün giriş yapmasını teşvik eder.
+  - Streak takibi yapılır (`login_streak`).
+  - Ödül: Coins (veya 7. gün Skin/Special Reward).
+
 ---
 
 ## 20. BAŞARI KRİTERLERİ (KPI)
@@ -500,35 +522,39 @@ Chromashift3D/
 ├── src/
 │   ├── core/
 │   │   ├── Game.js (main game loop)
-│   │   ├── SceneManager.js
-│   │   └── PhysicsEngine.js (manuel physics)
+│   │   └── SceneManager.js
+│   ├── game/
+│   │   ├── PhysicsEngine.js (physics logic)
+│   │   └── CollisionDetector.js (collision logic)
 │   ├── player/
-│   │   ├── Player.js
-│   │   └── PlayerController.js
+│   │   └── Player.js
 │   ├── obstacles/
 │   │   ├── ObstacleManager.js
-│   │   ├── ObstaclePool.js
-│   │   └── ObstacleTypes.js
+│   │   ├── Obstacle.js
+│   │   └── ObstaclePool.js
 │   ├── environment/
 │   │   ├── ThemeManager.js
 │   │   └── CameraController.js
 │   ├── ui/
-│   │   ├── UIManager.js
-│   │   ├── HUD.js
-│   │   └── GameOverScreen.js
+│   │   └── UIManager.js
 │   ├── audio/
-│   │   ├── AudioManager.js
-│   │   └── SoundEffects.js
+│   │   └── AudioManager.js
+│   ├── systems/
+│   │   ├── ErrorHandler.js
+│   │   ├── ParticleSystem.js
+│   │   ├── RetentionSystem.js (Daily Login)
+│   │   ├── SaveSystem.js
+│   │   └── TutorialSystem.js
+│   ├── monetization/
+│   │   ├── AdsManager.js
+│   │   └── RewardSystem.js
 │   ├── analytics/
-│   │   └── AnalyticsTracker.js
-│   └── ads/
-│       └── AdManager.js
-├── assets/
-│   ├── audio/
-│   ├── textures/
-│   └── fonts/
-├── index.html
-└── main.js
+│   │   └── Analytics.js
+│   ├── utils/
+│   │   └── Constants.js
+│   ├── index.html
+│   ├── main.js
+│   └── style.css
 ```
 
 ---
