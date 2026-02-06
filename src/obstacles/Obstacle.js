@@ -188,7 +188,8 @@ class Obstacle {
         otherColors.sort(() => Math.random() - 0.5);
         const selectedColors = [targetColor, otherColors[0], otherColors[1]].sort(() => Math.random() - 0.5);
 
-        const sideLength = 5.0;
+        // Increased size to provide more inner space
+        const sideLength = 6.5;
         const tubeGeom = getTubeGeometry(sideLength);
         const jointGeom = getJointGeometry();
         const jointMat = createMaterial(0xDDDDDD);
