@@ -53,14 +53,25 @@ class Game {
     }
 
     handleInput(e) {
+        // Prevent double firing on touch devices (touchstart + mousedown)
+        if (e.type === 'touchstart') {
+            this.lastTouchTime = Date.now();
+        } else if (e.type === 'mousedown') {
+            // Ignore mousedown if it happened shortly after a touchstart
+            if (Date.now() - (this.lastTouchTime || 0) < 500) {
+                return;
+            }
+        }
+
+        // Prevent browser zooming/scrolling on interaction
+        if (e.cancelable && e.target === SceneManager.renderer?.domElement) {
+            e.preventDefault();
+        }
+        // Note: preventDefault on 'touchstart' needs { passive: false } which we added.
+
         if (this.gameState === 'PLAYING') {
             PhysicsEngine.jump(this.player);
             AudioManager.playTap();
-
-            // Squash Anim for Jump handled in Player if we want, or here.
-            // Let's call a method on Player for jump anim to keep it clean, or just here.
-            // Player.js doesn't have a specific jump anim method exposed, but we can do it via TWEEN here if we want or add it.
-            // For now, let's leave the morph/cycle logic out since we are doing Tap-to-Jump.
         }
     }
 
