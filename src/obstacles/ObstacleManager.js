@@ -34,7 +34,7 @@ class ObstacleManager {
     spawnNext(score, playerColor) {
         // Difficulty Logic: Pick random type
         // Difficulty Logic: Pick random type from expanded set
-        const types = ['ring', 'fan', 'square', 'triangle', 'hexagon', 'double_circle'];
+        const types = ['ring', 'fan', 'square', 'triangle', 'pentagon', 'double_circle'];
         const type = types[Math.floor(Math.random() * types.length)];
 
         let spawnY = this.nextSpawnY;
@@ -43,7 +43,7 @@ class ObstacleManager {
         // Custom Positioning Logic per User Request:
         // ONLY 'fan' type gets offset. Ring and Square stay centered.
 
-        if (type === 'fan' || type === 'hexagon') {
+        if (type === 'fan' || type === 'pentagon') {
             // Increased offset for wider variance
             const offset = (Math.random() > 0.5 ? 1.2 : -1.2);
             spawnX = offset;

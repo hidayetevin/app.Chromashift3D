@@ -11,49 +11,95 @@ class CollisionDetector {
             // Optimization: Skip objects too far away on Y axis
             if (Math.abs(obs.mesh.position.y - playerPos.y) > 5) continue;
 
-            if (obs.type === 'ring') {
+            if (obs.type === 'ring' || obs.type === 'double_circle') {
                 // RING COLLISION LOGIC
                 // Ring geometry: Radius 2.2, Tube 0.3
-                const ringRadius = 2.5;
+                const ringRadius = 2.5; // Radius of the ring itself
                 const tubeRadius = 0.3;
 
-                // Distance from player to obstacle center
-                // Player usually at X=0, but accounting for potential offsets
-                const dx = playerPos.x - obs.mesh.position.x;
-                const dy = playerPos.y - obs.mesh.position.y;
-                const distToCenter = Math.sqrt(dx * dx + dy * dy);
+                // Targets to check:
+                // If single ring: Center is obs.mesh.position
+                // If double ring: Left Center and Right Center
+                let centers = [];
 
-                // Collision happens if player is touching the tube
-                // Distance from player center to the tube's centerline is |distToCenter - ringRadius|
-                // Hit check: distToTube < (playerRadius + tubeRadius)
-                const distToTube = Math.abs(distToCenter - ringRadius);
+                if (obs.type === 'double_circle') {
+                    // Left Ring Center (Local X = -2.2)
+                    // Right Ring Center (Local X = 2.2)
+                    // We need World Positions. Assumes mesh is at (0, Y, 0) and not rotated globally.
+                    // If mesh is rotated, we need to transform. double_circle mesh is NOT rotated in update(), only children.
 
-                if (distToTube < (playerRadius + tubeRadius)) {
-                    // COLLISION DETECTED
+                    const leftPos = obs.mesh.position.clone().add(new THREE.Vector3(-2.2, 0, 0));
+                    const rightPos = obs.mesh.position.clone().add(new THREE.Vector3(2.2, 0, 0));
 
-                    // Determine which segment (color) is being touched
-                    // 1. Calculate angle of player relative to center
-                    let angle = Math.atan2(dy, dx);
+                    // Helper to identify which ring for rotation check
+                    centers.push({ pos: leftPos, ringObj: obs.leftRing });
+                    centers.push({ pos: rightPos, ringObj: obs.rightRing });
+                } else {
+                    centers.push({ pos: obs.mesh.position, ringObj: obs.mesh });
+                }
 
-                    // 2. Adjust for obstacle rotation to find angle in local static space
-                    let localAngle = angle - obs.mesh.rotation.z;
+                for (let center of centers) {
+                    const centerPos = center.pos;
+                    const ringObj = center.ringObj;
 
-                    // 3. Normalize angle to 0 - 2PI range
-                    localAngle = localAngle % (2 * Math.PI);
-                    if (localAngle < 0) localAngle += 2 * Math.PI;
+                    // Distance from player to ring center
+                    const dx = playerPos.x - centerPos.x;
+                    const dy = playerPos.y - centerPos.y;
+                    const distToCenter = Math.sqrt(dx * dx + dy * dy);
 
-                    // 4. Find segment index (4 segments, each 90 degrees / PI/2)
-                    // Segment 0: 0-90, Segment 1: 90-180, etc.
-                    const segmentIndex = Math.floor(localAngle / (Math.PI / 2)) % 4;
-                    const segment = obs.segments[segmentIndex];
+                    // Collision happens if player is touching the tube
+                    // Hit check: distToTube < (playerRadius + tubeRadius)
+                    const distToTube = Math.abs(distToCenter - ringRadius); // 2.5 is hardcoded radius in logic (Obstacle uses 2.2? Adjust to match Obstacle.js radius 2.2 + 0.3?)
+                    // In Obstacle.js: createRingGeometry(2.2). Tube is 0.3. Total outer is 2.5. Centerline radius is 2.2.
+                    // Correct logic: distToCenter is distance to (0,0). Tube is at distance 2.2.
+                    // So abs(distToCenter - 2.2) < (0.3 + 0.3)
 
-                    if (segment) {
-                        return {
-                            hit: true,
-                            obstacle: obs,
-                            segment: segment,
-                            matchColor: segment.userData.color === playerState.color
-                        };
+                    const actualRingRadius = 2.2;
+                    const checkDist = Math.abs(distToCenter - actualRingRadius);
+
+                    if (checkDist < (playerRadius + tubeRadius)) {
+                        // COLLISION DETECTED
+
+                        // Determine which segment (color) is being touched
+                        // 1. Calculate angle of player relative to center
+                        let angle = Math.atan2(dy, dx);
+
+                        // 2. Adjust for rotation to find angle in local space
+                        // ringObj is the specific group rotating (mesh, or leftRing/rightRing)
+                        let localAngle = angle - ringObj.rotation.z;
+
+                        // 3. Normalize angle to 0 - 2PI range
+                        localAngle = localAngle % (2 * Math.PI);
+                        if (localAngle < 0) localAngle += 2 * Math.PI;
+
+                        // 4. Find segment index (4 segments, each 90 degrees / PI/2)
+                        // Segment 0: 0-90, Segment 1: 90-180, etc.
+                        const segmentIndex = Math.floor(localAngle / (Math.PI / 2)) % 4;
+
+                        // Need to access segments. Obstacle.js pushes all segments to `obs.segments`.
+                        // But we don't know which segment belongs to which ring easily unless we stored it.
+                        // Wait, obs.segments is a flat list. Double Circle has 8 segments.
+                        // 0-3: Left Ring (created first), 4-7: Right Ring.
+
+                        let targetSegment = null;
+                        if (obs.type === 'double_circle') {
+                            if (ringObj === obs.leftRing) {
+                                targetSegment = obs.segments[segmentIndex]; // 0-3
+                            } else {
+                                targetSegment = obs.segments[4 + segmentIndex]; // 4-7
+                            }
+                        } else {
+                            targetSegment = obs.segments[segmentIndex];
+                        }
+
+                        if (targetSegment) {
+                            return {
+                                hit: true,
+                                obstacle: obs,
+                                segment: targetSegment,
+                                matchColor: targetSegment.userData.color === playerState.color
+                            };
+                        }
                     }
                 }
 

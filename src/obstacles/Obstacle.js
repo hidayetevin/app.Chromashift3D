@@ -68,6 +68,8 @@ class Obstacle {
         this.segments = [];
         this.ringHolder = null;
         this.innerRing = null;
+        this.leftRing = null;
+        this.rightRing = null;
 
         if (type === 'fan') {
             this.createFan(playerColor);
@@ -75,8 +77,8 @@ class Obstacle {
             this.createSquare();
         } else if (type === 'triangle') {
             this.createTriangle(playerColor);
-        } else if (type === 'hexagon') {
-            this.createHexagon();
+        } else if (type === 'pentagon') { // Changed from hexagon
+            this.createPentagon();
         } else if (type === 'double_circle') {
             this.createDoubleCircle();
         } else {
@@ -247,41 +249,51 @@ class Obstacle {
         });
     }
 
-    createHexagon() {
+    createPentagon() {
         const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN];
-        const hexColors = [];
-        for (let i = 0; i < 6; i++) hexColors.push(colors[i % 4]);
-        hexColors.sort(() => Math.random() - 0.5);
+        const pentColors = [];
+        for (let i = 0; i < 5; i++) pentColors.push(colors[i % 4]);
 
-        const sideLength = 2.5;
+        // Shuffle colors
+        pentColors.sort(() => Math.random() - 0.5);
+
+        const sideLength = 3.2; // Slightly larger side for Pentagon to match size
         const tubeGeom = getTubeGeometry(sideLength);
         const jointGeom = getJointGeometry();
         const jointMat = createMaterial(0xDDDDDD);
 
-        for (let i = 0; i < 6; i++) {
-            const angle = i * Math.PI / 3;
-            // Radius to center of edge = apothem
-            const apothem = (sideLength / (2 * Math.tan(Math.PI / 6)));
+        const numSides = 5;
+        const angleStep = (Math.PI * 2) / numSides;
 
-            const mat = createMaterial(hexColors[i]);
+        for (let i = 0; i < numSides; i++) {
+            const angle = i * angleStep;
+
+            // Distance from center to the midpoint of the edge (Apothem)
+            const apothem = sideLength / (2 * Math.tan(Math.PI / numSides));
+
+            const mat = createMaterial(pentColors[i]);
             const bar = new THREE.Mesh(tubeGeom, mat);
 
             bar.position.x = Math.cos(angle) * apothem;
             bar.position.y = Math.sin(angle) * apothem;
-            bar.rotation.z = angle + Math.PI / 2; // Tangent
+            // Cylinder is Y-aligned. Rotate it to be tangent.
+            bar.rotation.z = angle + Math.PI / 2;
 
             bar.userData = {
-                color: hexColors[i],
+                color: pentColors[i],
                 shape: SHAPES.SQUARE,
-                size: { x: 0.6, y: sideLength, z: 0.6 } // Corrected: Cylinder Y is length
+                size: { x: 0.6, y: sideLength, z: 0.6 }
             };
             this.mesh.add(bar);
             this.segments.push(bar);
 
-            // Vertex Joint
-            const vertexAngle = angle + Math.PI / 6;
-            const vx = Math.cos(vertexAngle) * sideLength;
-            const vy = Math.sin(vertexAngle) * sideLength;
+            // Vertex Joint (between this edge and next)
+            const vertexAngle = angle + (angleStep / 2);
+            // Distance from center to vertex (Circumradius)
+            const radius = sideLength / (2 * Math.sin(Math.PI / numSides));
+
+            const vx = Math.cos(vertexAngle) * radius;
+            const vy = Math.sin(vertexAngle) * radius;
 
             const joint = new THREE.Mesh(jointGeom, jointMat);
             joint.position.set(vx, vy, 0);
@@ -290,14 +302,19 @@ class Obstacle {
     }
 
     createDoubleCircle() {
-        const radius = 2.5;
-        this.createRingGeometry(radius);
+        const radius = 2.2;
 
-        this.innerRing = new THREE.Group();
-        this.mesh.add(this.innerRing);
+        // Left Ring Group
+        this.leftRing = new THREE.Group();
+        this.leftRing.position.x = -2.2;
+        this.mesh.add(this.leftRing);
+        this.createRingGeometry(radius, this.leftRing);
 
-        const innerRadius = 1.4;
-        this.createRingGeometry(innerRadius, this.innerRing);
+        // Right Ring Group
+        this.rightRing = new THREE.Group();
+        this.rightRing.position.x = 2.2;
+        this.mesh.add(this.rightRing);
+        this.createRingGeometry(radius, this.rightRing);
     }
 
     createRingGeometry(radius, parentGroup = null) {
@@ -331,17 +348,24 @@ class Obstacle {
         this.mesh.rotation.set(0, 0, 0);
         this.passed = false;
         this.mesh.visible = true;
-        if (this.innerRing) {
-            this.innerRing.rotation.set(0, 0, 0);
-        }
+        if (this.innerRing) this.innerRing.rotation.set(0, 0, 0);
+        if (this.leftRing) this.leftRing.rotation.set(0, 0, 0);
+        if (this.rightRing) this.rightRing.rotation.set(0, 0, 0);
     }
 
     update(deltaTime) {
         if (this.rotationSpeed !== 0) {
-            this.mesh.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
+            if (this.type === 'double_circle') {
+                // Rotate rings locally
+                if (this.leftRing) this.leftRing.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
+                if (this.rightRing) this.rightRing.rotation.z -= THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime; // Counter-rotate
+            } else {
+                // Standard rotation for other obstacles
+                this.mesh.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
 
-            if (this.innerRing) {
-                this.innerRing.rotation.z -= THREE.MathUtils.degToRad(this.rotationSpeed * 2.5) * deltaTime;
+                if (this.innerRing) {
+                    this.innerRing.rotation.z -= THREE.MathUtils.degToRad(this.rotationSpeed * 2.5) * deltaTime;
+                }
             }
         }
     }
