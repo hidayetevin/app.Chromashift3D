@@ -2,8 +2,7 @@ import { GAME_CONFIG } from '../utils/Constants.js';
 
 class PhysicsEngine {
     constructor() {
-        this.gravity = GAME_CONFIG.gravity;
-        this.bounceHeight = GAME_CONFIG.bounceHeight;
+        // Direct access to GAME_CONFIG allows hot-reload of values
     }
 
     jump(player) {
@@ -12,7 +11,7 @@ class PhysicsEngine {
 
     update(player, deltaTime) {
         // Apply Gravity
-        player.velocity.y += this.gravity * deltaTime;
+        player.velocity.y += GAME_CONFIG.gravity * deltaTime;
 
         // Apply Velocity
         player.position.y += player.velocity.y * deltaTime;
@@ -118,7 +117,7 @@ class PhysicsEngine {
 
         if (player.position.y <= 0) {
             player.position.y = 0;
-            player.velocity.y = Math.sqrt(2 * Math.abs(this.gravity) * this.bounceHeight);
+            player.velocity.y = Math.sqrt(2 * Math.abs(GAME_CONFIG.gravity) * GAME_CONFIG.bounceHeight);
 
             // Dispatch bounce event or sound?
             // Handled in main loop or here.

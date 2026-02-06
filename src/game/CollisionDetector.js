@@ -11,7 +11,7 @@ class CollisionDetector {
             // Optimization: Skip objects too far away on Y axis
             if (Math.abs(obs.mesh.position.y - playerPos.y) > 5) continue;
 
-            if (obs.type === 'ring' || obs.type === 'double_circle') {
+            if (obs.type === 'ring' || obs.type === 'double_circle' || obs.type === 'vertical_double_circle') {
                 // RING COLLISION LOGIC
                 // Ring geometry: Radius 2.2, Tube 0.3
                 const ringRadius = 2.5; // Radius of the ring itself
@@ -19,7 +19,7 @@ class CollisionDetector {
 
                 // Targets to check:
                 // If single ring: Center is obs.mesh.position
-                // If double ring: Left Center and Right Center
+                // If double ring: Left/Right or Top/Bottom Centers
                 let centers = [];
 
                 if (obs.type === 'double_circle') {
@@ -34,6 +34,14 @@ class CollisionDetector {
                     // Helper to identify which ring for rotation check
                     centers.push({ pos: leftPos, ringObj: obs.leftRing });
                     centers.push({ pos: rightPos, ringObj: obs.rightRing });
+                } else if (obs.type === 'vertical_double_circle') {
+                    // Top Ring Center (Local Y = 2.42)
+                    // Bottom Ring Center (Local Y = -2.42)
+                    const topPos = obs.mesh.position.clone().add(new THREE.Vector3(0, 2.42, 0));
+                    const bottomPos = obs.mesh.position.clone().add(new THREE.Vector3(0, -2.42, 0));
+
+                    centers.push({ pos: topPos, ringObj: obs.topRing });
+                    centers.push({ pos: bottomPos, ringObj: obs.bottomRing });
                 } else {
                     centers.push({ pos: obs.mesh.position, ringObj: obs.mesh });
                 }
@@ -49,15 +57,11 @@ class CollisionDetector {
 
                     // Collision happens if player is touching the tube
                     // Hit check: distToTube < (playerRadius + tubeRadius)
-                    const distToTube = Math.abs(distToCenter - ringRadius); // 2.5 is hardcoded radius in logic (Obstacle uses 2.2? Adjust to match Obstacle.js radius 2.2 + 0.3?)
-                    // In Obstacle.js: createRingGeometry(2.2). Tube is 0.3. Total outer is 2.5. Centerline radius is 2.2.
-                    // Correct logic: distToCenter is distance to (0,0). Tube is at distance 2.2.
-                    // So abs(distToCenter - 2.2) < (0.3 + 0.3)
+                    // Ring Radius: 2.2 for normal, 2.42 for vertical_double (large)
+                    const actualRingRadius = obs.type === 'vertical_double_circle' ? 2.42 : 2.2;
+                    const distToTube = Math.abs(distToCenter - actualRingRadius);
 
-                    const actualRingRadius = 2.2;
-                    const checkDist = Math.abs(distToCenter - actualRingRadius);
-
-                    if (checkDist < (playerRadius + tubeRadius)) {
+                    if (distToTube < (playerRadius + tubeRadius)) {
                         // COLLISION DETECTED
 
                         // Determine which segment (color) is being touched
@@ -84,6 +88,12 @@ class CollisionDetector {
                         let targetSegment = null;
                         if (obs.type === 'double_circle') {
                             if (ringObj === obs.leftRing) {
+                                targetSegment = obs.segments[segmentIndex]; // 0-3
+                            } else {
+                                targetSegment = obs.segments[4 + segmentIndex]; // 4-7
+                            }
+                        } else if (obs.type === 'vertical_double_circle') {
+                            if (ringObj === obs.topRing) {
                                 targetSegment = obs.segments[segmentIndex]; // 0-3
                             } else {
                                 targetSegment = obs.segments[4 + segmentIndex]; // 4-7

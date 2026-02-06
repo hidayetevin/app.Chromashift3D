@@ -78,9 +78,11 @@ class Obstacle {
         } else if (type === 'triangle') {
             this.createTriangle(playerColor);
         } else if (type === 'pentagon') { // Changed from hexagon
-            this.createPentagon();
+            this.createPentagon(playerColor);
         } else if (type === 'double_circle') {
             this.createDoubleCircle();
+        } else if (type === 'vertical_double_circle') { // New Type
+            this.createVerticalDoubleCircle();
         } else {
             this.createRing();
         }
@@ -308,6 +310,53 @@ class Obstacle {
         }
     }
 
+    createVerticalDoubleCircle() {
+        const radius = 2.42; // Increased by 10% from 2.2
+
+        // Colors
+        const colorsTop = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
+
+        const colorsBottom = new Array(4);
+        colorsBottom[1] = colorsTop[3]; // Contact point: Bottom's Top (1) matches Top's Bottom (3)
+        colorsBottom[0] = colorsTop[0]; // Arbitrary non-contact
+        colorsBottom[2] = colorsTop[2];
+        colorsBottom[3] = colorsTop[1];
+
+        // Top Ring
+        this.topRing = new THREE.Group();
+        this.topRing.position.y = 2.42;
+        // Align so segment centers are cardinal. 
+        // 0 is Right. 1 is Top. 2 is Left. 3 is Bottom.
+        // Rotation -PI/4 puts centers at (45, 135, 225, 315).
+        // Wait, standard Ring 0 is Right (0 deg).
+        // If we want contact at 270 (Top Ring Bottom) and 90 (Bottom Ring Top).
+        // Segment 3 center is at 270. Segment 1 center is at 90.
+        // We DON'T need -PI/4 rotation for cardinal alignment if the segments are already cardinal?
+        // createRingGeometry: segment.rotation.z = i * PI/2.
+        // i=0: 0 deg (Right). i=1: 90 (Top). i=2: 180 (Left). i=3: 270 (Bottom).
+        // This is perfectly cardinal!
+        // The previous "Fix" rotated by -45 because the visual mesh might have been offset?
+        // Or because the user wanted "intersection" (X=0) to be a color center.
+        // For Side-by-Side: Intersection is Left's Right (0 deg) and Right's Left (180 deg).
+        // These ARE centers. Why did I rotate?
+        // Ah, maybe the TorusGeometry starts at a different angle? 
+        // Torus is X-Z plane? No, usually X-Y flat.
+        // Let's assume standard behavior: Torus logic in createRingGeometry creates 4 arcs.
+        // Each arc PI/2. Center of Arc 0 is at 45 degrees?
+        // So YES, we need -45 deg rotation to align centers to axes.
+
+        this.topRing.rotation.z = -Math.PI / 4;
+        this.mesh.add(this.topRing);
+        this.createRingGeometry(radius, this.topRing, colorsTop);
+
+        // Bottom Ring
+        this.bottomRing = new THREE.Group();
+        this.bottomRing.position.y = -2.42;
+        this.bottomRing.rotation.z = -Math.PI / 4;
+        this.mesh.add(this.bottomRing);
+        this.createRingGeometry(radius, this.bottomRing, colorsBottom);
+    }
+
     createDoubleCircle() {
         const radius = 2.2;
 
@@ -378,14 +427,20 @@ class Obstacle {
         // Reset to aligned position -PI/4
         if (this.leftRing) this.leftRing.rotation.set(0, 0, -Math.PI / 4);
         if (this.rightRing) this.rightRing.rotation.set(0, 0, -Math.PI / 4);
+        if (this.topRing) this.topRing.rotation.set(0, 0, -Math.PI / 4);
+        if (this.bottomRing) this.bottomRing.rotation.set(0, 0, -Math.PI / 4);
     }
 
     update(deltaTime) {
         if (this.rotationSpeed !== 0) {
             if (this.type === 'double_circle') {
-                // Rotate rings locally
+                // Rotate rings locally (Side by Side)
                 if (this.leftRing) this.leftRing.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
                 if (this.rightRing) this.rightRing.rotation.z -= THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime; // Counter-rotate
+            } else if (this.type === 'vertical_double_circle') {
+                // Vertical Stack
+                if (this.topRing) this.topRing.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
+                if (this.bottomRing) this.bottomRing.rotation.z -= THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
             } else {
                 // Standard rotation for other obstacles
                 this.mesh.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
