@@ -86,10 +86,15 @@ class Obstacle {
         const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN];
         // Square Logic: 4 bars arranged in a square shape
         // Center offset to make room for player
-        const offset = 2.0;
+        // INCREASED by 10% (was 2.0 -> 2.2)
+        const offset = 2.2;
+
+        // We need a longer bar for the bigger square
+        // Width approx offset * 2 = 4.4
+        const longBarGeom = new THREE.BoxGeometry(4.4, 0.5, 0.5);
 
         for (let i = 0; i < 4; i++) {
-            const bar = new THREE.Mesh(geoms.bar, new THREE.MeshLambertMaterial({ color: colors[i] }));
+            const bar = new THREE.Mesh(longBarGeom, new THREE.MeshLambertMaterial({ color: colors[i] }));
 
             // 0: Top, 1: Right, 2: Bottom, 3: Left
             let x = 0, y = 0, rot = 0;
@@ -105,7 +110,7 @@ class Obstacle {
             bar.userData = {
                 color: colors[i],
                 shape: SHAPES.SQUARE,
-                size: { x: 3.0, y: 0.5, z: 0.5 }
+                size: { x: 4.4, y: 0.5, z: 0.5 }
             };
 
             this.mesh.add(bar);

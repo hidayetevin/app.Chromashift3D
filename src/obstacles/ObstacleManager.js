@@ -40,15 +40,14 @@ class ObstacleManager {
         let spawnX = 0; // Default X
 
         // Custom Positioning Logic per User Request:
-        // "Çarpı ve Kare türü engelleri topun çapı kadar sağa veya sola kaydır"
-        // Ring stays generally in center.
+        // ONLY 'fan' type gets offset. Ring and Square stay centered.
 
-        if (['fan', 'square'].includes(type)) {
+        if (type === 'fan') {
             // Increased offset for wider variance
             const offset = (Math.random() > 0.5 ? 1.2 : -1.2);
             spawnX = offset;
         } else {
-            // Ring type stays as is (Centered at X=0)
+            // Ring and Square stay centered at X=0
         }
 
         // Rotation Speed
