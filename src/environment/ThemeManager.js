@@ -49,15 +49,8 @@ class ThemeManager {
     }
 
     checkTransition(score) {
-        let newTheme = THEMES.GRASS;
-        if (score >= 150) newTheme = THEMES.BEYOND;
-        else if (score >= 100) newTheme = THEMES.VOID;
-        else if (score >= 50) newTheme = THEMES.SPACE;
-        else if (score >= 20) newTheme = THEMES.CLOUD;
-
-        if (newTheme !== this.currentTheme && newTheme !== this.targetTheme) {
-            this.transitionTo(newTheme);
-        }
+        // Theme transitions disabled per user request. 
+        // Always stay in the initial theme.
     }
 
     transitionTo(theme) {
