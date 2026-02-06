@@ -43,7 +43,7 @@ class ObstacleManager {
         // Custom Positioning Logic per User Request:
         // ONLY 'fan' type gets offset. Ring and Square stay centered.
 
-        if (type === 'fan') {
+        if (type === 'fan' || type === 'hexagon') {
             // Increased offset for wider variance
             const offset = (Math.random() > 0.5 ? 1.2 : -1.2);
             spawnX = offset;
