@@ -87,6 +87,8 @@ class Obstacle {
             this.createVerticalDoubleCircle();
         } else if (type === 'color_switcher') {
             this.createColorSwitcher();
+        } else if (type === 'sliding_bar') {
+            this.createSlidingBar();
         } else {
             this.createRing();
         }
@@ -347,6 +349,42 @@ class Obstacle {
         }
     }
 
+    createSlidingBar() {
+        // Horizontal bar, 4 segments, sliding.
+        // Screen width approx 5-6 safe. Let's make segments huge to ensure coverage.
+        const segmentWidth = 4.0;
+        const totalWidth = segmentWidth * 4;
+        const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
+
+        this.slideDirection = Math.random() > 0.5 ? 1 : -1;
+
+        // Geometry for horizontal tube
+        const geometry = getTubeGeometry(segmentWidth);
+
+        // Start positions centered: -6, -2, 2, 6
+        // Offsets: -1.5*w, -0.5*w, 0.5*w, 1.5*w
+        const startX = -(segmentWidth * 1.5);
+
+        for (let i = 0; i < 4; i++) {
+            const material = createMaterial(colors[i]);
+            const segment = new THREE.Mesh(geometry, material);
+
+            // Rotate to be horizontal
+            segment.rotation.z = Math.PI / 2;
+
+            const xPos = startX + (i * segmentWidth);
+            segment.position.set(xPos, 0, 0);
+
+            segment.userData = {
+                color: colors[i],
+                size: { x: segmentWidth, y: 0.6, z: 0.6 } // For collision logic
+            };
+
+            this.mesh.add(segment);
+            this.segments.push(segment);
+        }
+    }
+
     createVerticalDoubleCircle() {
         const radius = 2.42; // Increased by 10% from 2.2
 
@@ -466,7 +504,7 @@ class Obstacle {
     }
 
     update(deltaTime) {
-        if (this.rotationSpeed !== 0) {
+        if (this.rotationSpeed !== 0 || this.type === 'sliding_bar') {
             if (this.type === 'double_circle') {
                 // Rotate rings locally (Side by Side)
                 if (this.leftRing) this.leftRing.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
@@ -475,6 +513,24 @@ class Obstacle {
                 // Vertical Stack
                 if (this.topRing) this.topRing.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
                 if (this.bottomRing) this.bottomRing.rotation.z -= THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;
+            } else if (this.type === 'sliding_bar') {
+                // Sliding Animation
+                // Use baseSpeed approx 2-3 units per sec.
+                const speed = 3.0 * deltaTime * (this.slideDirection || 1);
+                const boundary = 8.0; // 4 segments of width 4. total 16. wrap at +/- 8?
+                // Positions roughly: -6, -2, 2, 6.
+                // If Right (+): 6 -> +speed. If > 8 -> -8.
+
+                this.segments.forEach(seg => {
+                    seg.position.x += speed;
+
+                    if (this.slideDirection > 0) {
+                        if (seg.position.x > boundary) seg.position.x -= 16.0;
+                    } else {
+                        if (seg.position.x < -boundary) seg.position.x += 16.0;
+                    }
+                });
+
             } else {
                 // Standard rotation for other obstacles
                 this.mesh.rotation.z += THREE.MathUtils.degToRad(this.rotationSpeed) * deltaTime;

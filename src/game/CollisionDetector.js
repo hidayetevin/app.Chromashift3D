@@ -136,6 +136,38 @@ class CollisionDetector {
                     };
                 }
 
+            } else if (obs.type === 'sliding_bar') {
+                // SLIDING BAR LOGIC
+                // Check each segment's position (which updates every frame)
+                // World Position Y = obs.mesh.position.y (local y is 0).
+
+                const dy = Math.abs(playerPos.y - obs.mesh.position.y);
+                const combinedRadiusY = 0.3 + playerRadius;
+
+                // First check Y-axis overlap (Optimization)
+                // If not close in height, skip X check
+                if (dy < combinedRadiusY) {
+
+                    for (let segment of obs.segments) {
+                        // Calculate World X of this segment
+                        const segWorldX = obs.mesh.position.x + segment.position.x;
+                        const dx = Math.abs(playerPos.x - segWorldX);
+
+                        // Half width of segment is 2.0 (width 4.0)
+                        const halfWidth = 2.0;
+
+                        if (dx < (halfWidth + playerRadius)) {
+                            // HIT!
+                            return {
+                                hit: true,
+                                obstacle: obs,
+                                segment: segment,
+                                matchColor: segment.userData.color === playerState.color
+                            };
+                        }
+                    }
+                }
+
             } else {
                 // BOX COLLISION LOGIC For 'fan' and 'square' (Oriented Bounding Box - OBB)
 

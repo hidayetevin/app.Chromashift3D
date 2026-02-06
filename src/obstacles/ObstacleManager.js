@@ -48,7 +48,7 @@ class ObstacleManager {
             // Normal Obstacle logic
             this.obstaclesSinceSwitch++;
 
-            const types = ['ring', 'fan', 'square', 'triangle', 'pentagon', 'double_circle', 'vertical_double_circle'];
+            const types = ['ring', 'fan', 'square', 'triangle', 'pentagon', 'double_circle', 'vertical_double_circle', 'sliding_bar'];
             type = types[Math.floor(Math.random() * types.length)];
 
             // Custom Positioning Logic per User Request:
