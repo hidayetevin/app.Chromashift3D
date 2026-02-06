@@ -131,7 +131,8 @@ class Obstacle {
         let targetColor = playerColor || COLORS.RED;
         const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
         otherColors.sort(() => Math.random() - 0.5);
-        const selectedColors = [targetColor, otherColors[0], otherColors[1]].sort(() => Math.random() - 0.5);
+        // Requirement: 2 blades match player color (Double Blade Rule)
+        const selectedColors = [targetColor, targetColor, otherColors[0]].sort(() => Math.random() - 0.5);
 
         // Fan uses bars radiating from center.
         // Length 3.0.

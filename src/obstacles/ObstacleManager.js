@@ -48,7 +48,7 @@ class ObstacleManager {
         let rotationSpeed = 50 + (score * 2);
 
         // Check for Color Switch Event
-        if (this.obstaclesSinceSwitch >= 5) {
+        if (this.obstaclesSinceSwitch >= 1) {
             type = 'color_switcher';
             this.obstaclesSinceSwitch = 0;
             // Switcher is always centered

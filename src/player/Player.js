@@ -99,6 +99,20 @@ class Player {
         return newColor;
     }
 
+    setColor(color) {
+        // Find key: Value -> Key (e.g. 0xFF0000 -> 'RED')
+        // Actually, COLORS is exported object. Let's iterate keys.
+        const key = Object.keys(COLORS).find(k => COLORS[k] === color);
+
+        if (key) {
+            const index = this.colorKeys.indexOf(key);
+            if (index !== -1) {
+                this.currentColorIndex = index;
+                this.updateAppearance();
+            }
+        }
+    }
+
     updateAppearance() {
         const colorKey = this.colorKeys[this.currentColorIndex];
         const newColor = COLORS[colorKey];

@@ -117,9 +117,22 @@ class Game {
                 // Color Switcher Logic
                 if (!collision.obstacle.passed) {
                     collision.obstacle.passed = true;
-                    // Switch Color
-                    // Ensure new color is different from current? Often good practice.
-                    const newColor = this.player.switchRandomColor();
+
+                    // Retrieve pre-determined target color if available
+                    // Note: 'collision.obstacle' is the Obstacle instance. 
+                    // 'userData' is on 'obstacle.mesh' or 'obstacle.segments'? 
+                    // ObstacleManager set it on 'obs.mesh.userData.switchTarget'.
+
+                    const targetColor = collision.obstacle.mesh.userData.switchTarget;
+
+                    if (targetColor) {
+                        this.player.setColor(targetColor);
+                        console.log('Switched to Target Color');
+                    } else {
+                        // Fallback (should not happen with new Manager logic)
+                        this.player.switchRandomColor();
+                        console.warn('Fallback Random Switch');
+                    }
 
                     // Hide the switcher or play effect
                     collision.obstacle.mesh.visible = false;

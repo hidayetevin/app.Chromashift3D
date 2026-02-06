@@ -1,6 +1,6 @@
 export const GAME_CONFIG = {
     gravity: -20, // Increased from -9.8 for snappier feel
-    bounceHeight: 0.3, // Reduced from 3.5 per user request
+    bounceHeight: 2.0, // Adjusted to 2.0 to reduce jump height/frequency
     jumpForce: 10,   // Velocity impulse
     baseSpeed: 2.0,
     maxSpeed: 4.5,
