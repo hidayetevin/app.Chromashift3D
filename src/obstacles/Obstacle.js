@@ -76,21 +76,21 @@ class Obstacle {
         if (type === 'fan') {
             this.createFan(playerColor);
         } else if (type === 'square') {
-            this.createSquare(playerColor);
+            this.createSquare();
         } else if (type === 'triangle') {
             this.createTriangle(playerColor);
         } else if (type === 'pentagon') { // Changed from hexagon
             this.createPentagon(playerColor);
         } else if (type === 'double_circle') {
-            this.createDoubleCircle(playerColor);
+            this.createDoubleCircle();
         } else if (type === 'vertical_double_circle') { // New Type
-            this.createVerticalDoubleCircle(playerColor);
+            this.createVerticalDoubleCircle();
         } else if (type === 'color_switcher') {
             this.createColorSwitcher();
         } else if (type === 'sliding_bar') {
-            this.createSlidingBar(playerColor);
+            this.createSlidingBar();
         } else {
-            this.createRing(playerColor);
+            this.createRing();
         }
     }
 
@@ -176,16 +176,8 @@ class Obstacle {
         }
     }
 
-    createSquare(playerColor) {
-        let targetColor = playerColor || COLORS.RED;
-        const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
-        otherColors.sort(() => Math.random() - 0.5);
-
-        // Double Gate Logic: 2 sides are target color
-        let colors = [targetColor, targetColor, otherColors[0], otherColors[1]];
-        const shift = Math.floor(Math.random() * 4);
-        colors = [...colors.slice(shift), ...colors.slice(0, shift)];
-
+    createSquare() {
+        const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN];
         const sideLength = 4.4;
         const halfSide = sideLength / 2;
         const tubeGeom = getTubeGeometry(sideLength);
@@ -361,20 +353,12 @@ class Obstacle {
         }
     }
 
-    createSlidingBar(playerColor) {
-        let targetColor = playerColor || COLORS.RED;
-        const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
-        otherColors.sort(() => Math.random() - 0.5);
-
-        // Double Gate Logic: 2 segments match player color
-        let colors = [targetColor, targetColor, otherColors[0], otherColors[1]];
-        const shift = Math.floor(Math.random() * 4);
-        colors = [...colors.slice(shift), ...colors.slice(0, shift)];
-
+    createSlidingBar() {
         // Horizontal bar, 4 segments, sliding.
         // Screen width approx 5-6 safe. Let's make segments huge to ensure coverage.
         const segmentWidth = 4.0;
         const totalWidth = segmentWidth * 4;
+        const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
 
         this.slideDirection = Math.random() > 0.5 ? 1 : -1;
 
@@ -405,17 +389,11 @@ class Obstacle {
         }
     }
 
-    createVerticalDoubleCircle(playerColor) {
+    createVerticalDoubleCircle() {
         const radius = 2.42; // Increased by 10% from 2.2
 
-        let targetColor = playerColor || COLORS.RED;
-        const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
-        otherColors.sort(() => Math.random() - 0.5);
-
-        // Double Gate Logic for Top Ring
-        let colorsTop = [targetColor, targetColor, otherColors[0], otherColors[1]];
-        const shift = Math.floor(Math.random() * 4);
-        colorsTop = [...colorsTop.slice(shift), ...colorsTop.slice(0, shift)];
+        // Colors
+        const colorsTop = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
 
         const colorsBottom = new Array(4);
         colorsBottom[1] = colorsTop[3]; // Contact point: Bottom's Top (1) matches Top's Bottom (3)
@@ -455,17 +433,12 @@ class Obstacle {
         this.createRingGeometry(radius, this.bottomRing, colorsBottom);
     }
 
-    createDoubleCircle(playerColor) {
+    createDoubleCircle() {
         const radius = 2.2;
 
-        let targetColor = playerColor || COLORS.RED;
-        const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
-        otherColors.sort(() => Math.random() - 0.5);
-
-        // Double Gate Logic for Left Ring
-        let colorsL = [targetColor, targetColor, otherColors[0], otherColors[1]];
-        const shift = Math.floor(Math.random() * 4);
-        colorsL = [...colorsL.slice(shift), ...colorsL.slice(0, shift)];
+        // Generate synchronized colors
+        // Left Colors: Random
+        const colorsL = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
 
         // Right Colors: Synced to match at intersection (X=0)
         // Left Ring rotates +theta, Right Ring rotates -theta.
@@ -493,26 +466,14 @@ class Obstacle {
         this.createRingGeometry(radius, this.rightRing, colorsR);
     }
 
-    createRingGeometry(radius, parentGroup = null, fixedColors = null, playerColor = null) {
+    createRingGeometry(radius, parentGroup = null, fixedColors = null) {
         const tube = 0.3;
         const radialSegments = 16;
         const tubularSegments = 32;
         const arc = Math.PI / 2;
 
-        // Use fixed colors if provided, otherwise random shuffle with Double Gate rule
-        let colors;
-        if (fixedColors) {
-            colors = fixedColors;
-        } else {
-            const targetColor = playerColor || COLORS.RED;
-            const otherColors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== targetColor);
-            otherColors.sort(() => Math.random() - 0.5);
-
-            // Double Gate rule: 2 adjacent segments match player color
-            colors = [targetColor, targetColor, otherColors[0], otherColors[1]];
-            const shift = Math.floor(Math.random() * 4);
-            colors = [...colors.slice(shift), ...colors.slice(0, shift)];
-        }
+        // Use fixed colors if provided, otherwise random shuffle
+        const colors = fixedColors ? fixedColors : [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].sort(() => Math.random() - 0.5);
 
         for (let i = 0; i < 4; i++) {
             const geometry = new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments, arc);
@@ -530,8 +491,8 @@ class Obstacle {
         }
     }
 
-    createRing(playerColor) {
-        this.createRingGeometry(2.2, null, null, playerColor);
+    createRing() {
+        this.createRingGeometry(2.2);
     }
 
     reset() {
