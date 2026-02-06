@@ -105,6 +105,19 @@ class Game {
         this.gameTime += deltaTime;
 
         PhysicsEngine.update(this.player, deltaTime);
+
+        // Boundary Check: Ensure player stays within camera view (Safe Area)
+        // Camera focus point is camera.y - 5. 
+        // Half-height of view is approx 7-8 units. 
+        const cameraFocusY = CameraController.camera.position.y - 5;
+        const verticalOffset = Math.abs(this.player.position.y - cameraFocusY);
+
+        if (verticalOffset > 8.5) {
+            console.log("Out of safe area - Game Over");
+            this.gameOver();
+            return;
+        }
+
         this.obstacleManager.update(deltaTime, this.player, this.score);
         ThemeManager.checkTransition(this.score);
 

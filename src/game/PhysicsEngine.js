@@ -115,13 +115,7 @@ class PhysicsEngine {
 
         // OK, I will proceed with: Player bounces at Y=0. Obstacles move -Y.
 
-        if (player.position.y <= 0) {
-            player.position.y = 0;
-            player.velocity.y = Math.sqrt(2 * Math.abs(GAME_CONFIG.gravity) * GAME_CONFIG.bounceHeight);
-
-            // Dispatch bounce event or sound?
-            // Handled in main loop or here.
-        }
+        // Ground Collision removed per user request to allow falling.
     }
 }
 

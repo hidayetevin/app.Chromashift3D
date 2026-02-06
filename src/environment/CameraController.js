@@ -45,8 +45,8 @@ class CameraController {
     }
 
     update(playerY, deltaTime) {
-        // Smooth Y follow
-        this.targetY = playerY + 5;
+        // Only follow the player UP. Never move the camera back down.
+        this.targetY = Math.max(this.targetY, playerY + 5);
         this.originalPosition.y = THREE.MathUtils.lerp(this.originalPosition.y, this.targetY, 0.1);
 
         // Base Follow
