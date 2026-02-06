@@ -21,6 +21,7 @@ class Obstacle {
     }
 
     initType(type) {
+        this.type = type;
         // Clear children
         this.mesh.children.forEach(c => {
             if (c.geometry) c.geometry.dispose();
