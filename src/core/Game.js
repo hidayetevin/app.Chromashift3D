@@ -111,8 +111,24 @@ class Game {
         const collision = CollisionDetector.check(this.player, this.obstacleManager.getObstacles());
 
         if (collision) {
-            // Check Color Match ONLY (User Request)
-            if (collision.matchColor) {
+            // Check Collision Type
+
+            if (collision.type === 'switch') {
+                // Color Switcher Logic
+                if (!collision.obstacle.passed) {
+                    collision.obstacle.passed = true;
+                    // Switch Color
+                    // Ensure new color is different from current? Often good practice.
+                    const newColor = this.player.switchRandomColor();
+
+                    // Hide the switcher or play effect
+                    collision.obstacle.mesh.visible = false;
+
+                    AudioManager.playSuccess(); // Reuse success sound for feedback
+                    // Improve: Particle effect burst here
+                }
+            }
+            else if (collision.matchColor) {
                 // Success
                 if (!collision.obstacle.passed) {
                     this.score++;

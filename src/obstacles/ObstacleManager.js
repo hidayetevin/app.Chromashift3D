@@ -5,6 +5,7 @@ class ObstacleManager {
     constructor(scene) {
         this.pool = new ObstaclePool(scene, 20);
         this.nextSpawnY = 15; // Start spawning much higher (was 5)
+        this.obstaclesSinceSwitch = 0;
     }
 
     update(deltaTime, player, score) {
@@ -32,27 +33,32 @@ class ObstacleManager {
     }
 
     spawnNext(score, playerColor) {
-        // Difficulty Logic: Pick random type
-        // Difficulty Logic: Pick random type from expanded set
-        const types = ['ring', 'fan', 'square', 'triangle', 'pentagon', 'double_circle', 'vertical_double_circle'];
-        const type = types[Math.floor(Math.random() * types.length)];
+        let type = '';
+        let spawnX = 0;
+        let rotationSpeed = 50 + (score * 2);
 
-        let spawnY = this.nextSpawnY;
-        let spawnX = 0; // Default X
-
-        // Custom Positioning Logic per User Request:
-        // ONLY 'fan' type gets offset. Ring and Square stay centered.
-
-        if (type === 'fan' || type === 'pentagon') {
-            // Increased offset for wider variance
-            const offset = (Math.random() > 0.5 ? 1.2 : -1.2);
-            spawnX = offset;
+        // Check for Color Switch Event
+        if (this.obstaclesSinceSwitch >= 5) {
+            type = 'color_switcher';
+            this.obstaclesSinceSwitch = 0;
+            // Switcher is always centered
+            spawnX = 0;
+            rotationSpeed = 100;
         } else {
-            // Ring and Square stay centered at X=0
+            // Normal Obstacle logic
+            this.obstaclesSinceSwitch++;
+
+            const types = ['ring', 'fan', 'square', 'triangle', 'pentagon', 'double_circle', 'vertical_double_circle'];
+            type = types[Math.floor(Math.random() * types.length)];
+
+            // Custom Positioning Logic per User Request:
+            if (type === 'fan' || type === 'pentagon') {
+                const offset = (Math.random() > 0.5 ? 1.2 : -1.2);
+                spawnX = offset;
+            }
         }
 
-        // Rotation Speed
-        let rotationSpeed = 50 + (score * 2);
+        let spawnY = this.nextSpawnY;
 
         const obs = this.pool.get(type, spawnY, rotationSpeed, playerColor);
         obs.mesh.position.x = spawnX; // Apply X offset

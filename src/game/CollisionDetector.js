@@ -113,6 +113,29 @@ class CollisionDetector {
                     }
                 }
 
+            } else if (obs.type === 'color_switcher') {
+                // Color Switcher Logic (Sensor)
+                // It is a 2x2 grid of 0.5 cubes. Total size ~1.0 box centered at obs.position.
+                // Simple AABB or Distance Check
+
+                const dx = Math.abs(playerPos.x - obs.mesh.position.x);
+                const dy = Math.abs(playerPos.y - obs.mesh.position.y);
+
+                // Switcher Half-Size approx 0.5. Player Radius 0.3.
+                // If overlap
+                if (dx < (0.5 + playerRadius - 0.1) && dy < (0.5 + playerRadius - 0.1)) {
+                    // Check if already triggered?
+                    // Game.js should handle "once" logic or we disable obstacle here?
+                    // Ideally CollisionDetector is pure. But we need to signal.
+
+                    return {
+                        hit: true,
+                        obstacle: obs,
+                        type: 'switch', // Special type
+                        matchColor: true // Always safe to touch
+                    };
+                }
+
             } else {
                 // BOX COLLISION LOGIC For 'fan' and 'square' (Oriented Bounding Box - OBB)
 

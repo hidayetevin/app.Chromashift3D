@@ -70,6 +70,8 @@ class Obstacle {
         this.innerRing = null;
         this.leftRing = null;
         this.rightRing = null;
+        this.topRing = null;
+        this.bottomRing = null;
 
         if (type === 'fan') {
             this.createFan(playerColor);
@@ -83,9 +85,44 @@ class Obstacle {
             this.createDoubleCircle();
         } else if (type === 'vertical_double_circle') { // New Type
             this.createVerticalDoubleCircle();
+        } else if (type === 'color_switcher') {
+            this.createColorSwitcher();
         } else {
             this.createRing();
         }
+    }
+
+    createColorSwitcher() {
+        // A "Cube" divided into 4 equal parts (4 colors)
+        const size = 0.5;
+        const geometry = new THREE.BoxGeometry(size, size, size);
+        const colors = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN];
+
+        // Positions for 2x2 grid (centered)
+        const offset = size / 2;
+        const positions = [
+            { x: offset, y: offset, z: 0 },
+            { x: -offset, y: offset, z: 0 },
+            { x: -offset, y: -offset, z: 0 },
+            { x: offset, y: -offset, z: 0 }
+        ];
+
+        for (let i = 0; i < 4; i++) {
+            const material = createMaterial(colors[i]);
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(positions[i].x, positions[i].y, positions[i].z);
+
+            cube.userData = {
+                isSwitcher: true,
+                color: colors[i]
+            };
+
+            this.mesh.add(cube);
+            this.segments.push(cube);
+        }
+
+        // Add rotation to the whole group in update()
+        this.rotationSpeed = 100;
     }
 
     createFan(playerColor) {
@@ -325,15 +362,12 @@ class Obstacle {
         // Top Ring
         this.topRing = new THREE.Group();
         this.topRing.position.y = 2.42;
-        // Align so segment centers are cardinal. 
+        // Align so segment centers are cardinal.
         // 0 is Right. 1 is Top. 2 is Left. 3 is Bottom.
         // Rotation -PI/4 puts centers at (45, 135, 225, 315).
         // Wait, standard Ring 0 is Right (0 deg).
         // If we want contact at 270 (Top Ring Bottom) and 90 (Bottom Ring Top).
         // Segment 3 center is at 270. Segment 1 center is at 90.
-        // We DON'T need -PI/4 rotation for cardinal alignment if the segments are already cardinal?
-        // createRingGeometry: segment.rotation.z = i * PI/2.
-        // i=0: 0 deg (Right). i=1: 90 (Top). i=2: 180 (Left). i=3: 270 (Bottom).
         // This is perfectly cardinal!
         // The previous "Fix" rotated by -45 because the visual mesh might have been offset?
         // Or because the user wanted "intersection" (X=0) to be a color center.

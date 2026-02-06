@@ -76,10 +76,38 @@ class Player {
     }
 
     getCurrentState() {
+        // Return active properties for checking
         return {
             color: COLORS[this.colorKeys[this.currentColorIndex]],
             shape: SHAPES[this.shapeKeys[this.currentShapeIndex]]
         };
+    }
+
+    switchRandomColor() {
+        const currentColor = this.getCurrentState().color;
+        const available = [COLORS.RED, COLORS.BLUE, COLORS.YELLOW, COLORS.GREEN].filter(c => c !== currentColor);
+        const newColor = available[Math.floor(Math.random() * available.length)];
+
+        // Find the key for the new color
+        const key = Object.keys(COLORS).find(k => COLORS[k] === newColor);
+
+        if (key) {
+            this.currentColorIndex = this.colorKeys.indexOf(key);
+            this.updateAppearance();
+        }
+
+        return newColor;
+    }
+
+    updateAppearance() {
+        const colorKey = this.colorKeys[this.currentColorIndex];
+        const newColor = COLORS[colorKey];
+
+        this.mesh.material.color.setHex(newColor);
+        this.mesh.material.emissive.setHex(newColor);
+        this.glowLight.color.setHex(newColor);
+
+        ParticleSystem.emit(this.mesh.position, newColor, 15);
     }
 }
 
