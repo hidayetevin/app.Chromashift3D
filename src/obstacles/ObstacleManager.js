@@ -39,8 +39,8 @@ class ObstacleManager {
         // - Offset = +/- 1.0 on X Axis.
 
         if (type === 'fan') {
-            // Updated diameter offset based on new radius 0.3 -> Diameter 0.6
-            const offset = (Math.random() > 0.5 ? 0.6 : -0.6);
+            // Increased offset for wider variance (User Request)
+            const offset = (Math.random() > 0.5 ? 1.2 : -1.2);
             spawnX = offset;
         } else {
             // Ring type stays as is (Centered at X=0)
