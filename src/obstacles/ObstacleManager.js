@@ -70,7 +70,7 @@ class ObstacleManager {
             type = types[Math.floor(Math.random() * types.length)];
 
             // Custom Positioning Logic per User Request:
-            if (type === 'fan' || type === 'pentagon') {
+            if (type === 'fan') {
                 const offset = (Math.random() > 0.5 ? 1.2 : -1.2);
                 spawnX = offset;
             }
