@@ -24,6 +24,11 @@
     <div id="hud">
       <div id="score">0</div>
       <div id="best-hud">BEST: <span id="best-val">0</span></div>
+      <button id="pause-btn" class="pause-icon-btn">
+        <svg viewBox="0 0 24 24" fill="white">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+        </svg>
+      </button>
     </div>
 
     <div id="tutorial-overlay">Steps appear here</div>
@@ -64,6 +69,18 @@
 
         <button id="settings-close-btn" class="modal-btn modal-btn-confirm"
           style="margin-top: 20px; width: 100%;">CLOSE</button>
+      </div>
+    </div>
+
+    <div id="pause-overlay" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-title" id="pause-title">PAUSED</div>
+        <div class="menu-content" style="margin-bottom: 0; gap: 12px;">
+          <button id="resume-btn" class="glow-button" style="padding: 15px;">RESUME</button>
+          <button id="restart-game-btn" class="outline-button" style="padding: 15px;">RESTART</button>
+          <button id="quit-btn" class="outline-button"
+            style="padding: 15px; color: #ff3b30; border-color: rgba(255,59,48,0.3);">QUIT GAME</button>
+        </div>
       </div>
     </div>
   </div>

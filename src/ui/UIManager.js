@@ -7,7 +7,8 @@ class UIManager {
             score: document.getElementById('score'),
             bestScore: document.getElementById('best-score'),
             bestHud: document.getElementById('best-val'),
-            settings: document.getElementById('settings-overlay')
+            settings: document.getElementById('settings-overlay'),
+            pause: document.getElementById('pause-overlay')
         };
 
         this.currentLanguage = localStorage.getItem('chromashift_lang') || 'EN';
@@ -52,6 +53,29 @@ class UIManager {
                 module.default.setEnabled(e.target.checked);
             });
         });
+
+        // Pause Button
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                import('../core/Game.js').then(game => game.default.pause());
+            });
+        }
+
+        // Resume Button
+        document.getElementById('resume-btn').addEventListener('click', () => {
+            import('../core/Game.js').then(game => game.default.resume());
+        });
+
+        // Restart Game Button (from Pause)
+        document.getElementById('restart-game-btn').addEventListener('click', () => {
+            window.location.reload(); // Simple approach for now
+        });
+
+        // Quit Button
+        document.getElementById('quit-btn').addEventListener('click', () => {
+            window.location.reload(); // Returns to main menu by default
+        });
     }
 
     setLanguage(lang) {
@@ -79,7 +103,11 @@ class UIManager {
                 reviveMsg: (s) => `Skor: ${s}\nReklam izleyerek devam etmek ister misin?`,
                 continue: "DEVAM",
                 giveup: "VAZGEÇ",
-                tutorial: "Zıplamak için tıkla!"
+                tutorial: "Zıplamak için tıkla!",
+                pause: "DURAKLATILDI",
+                resume: "DEVAM ET",
+                restart: "YENİDEN BAŞLA",
+                quit: "OYUNDAN ÇIK"
             },
             EN: {
                 start: "TAP TO START",
@@ -94,7 +122,11 @@ class UIManager {
                 reviveMsg: (s) => `Score: ${s}\nWatch a short ad to continue from here?`,
                 continue: "CONTINUE",
                 giveup: "GIVE UP",
-                tutorial: "Tap to Jump!"
+                tutorial: "Tap to Jump!",
+                pause: "PAUSED",
+                resume: "RESUME",
+                restart: "RESTART",
+                quit: "QUIT GAME"
             }
         };
 
@@ -107,6 +139,12 @@ class UIManager {
         document.getElementById('label-sound').innerText = t.sound;
         document.getElementById('label-language').innerText = t.language;
         document.getElementById('settings-close-btn').innerText = t.close;
+
+        // Pause translations
+        document.getElementById('pause-title').innerText = t.pause;
+        document.getElementById('resume-btn').innerText = t.resume;
+        document.getElementById('restart-game-btn').innerText = t.restart;
+        document.getElementById('quit-btn').innerText = t.quit;
 
         // Update tutorial and game over labels if they exist
         const goTitle = document.querySelector('.game-over-title');

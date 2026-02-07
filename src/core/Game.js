@@ -16,7 +16,7 @@ import ParticleSystem from '../systems/ParticleSystem.js';
 
 class Game {
     constructor() {
-        this.gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
+        this.gameState = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER
         this.score = 0;
         this.gameTime = 0;
         this.lastFrameTime = 0;
@@ -56,9 +56,29 @@ class Game {
         UIManager.hideStartScreen();
         UIManager.updateScore(0);
 
+        // Show pause button during gameplay
+        document.getElementById('pause-btn').style.display = 'flex';
+
         const lang = UIManager.currentLanguage;
         const tutorialText = lang === 'TR' ? "Zıplamak için tıkla!" : "Tap to Jump!";
         UIManager.showTutorial(tutorialText);
+    }
+
+    pause() {
+        if (this.gameState !== 'PLAYING') return;
+        this.gameState = 'PAUSED';
+        UIManager.screens.pause.style.display = 'flex';
+        // Clear pause button while paused? (Optional)
+        document.getElementById('pause-btn').style.display = 'none';
+    }
+
+    resume() {
+        if (this.gameState !== 'PAUSED') return;
+        this.gameState = 'PLAYING';
+        UIManager.screens.pause.style.display = 'none';
+        document.getElementById('pause-btn').style.display = 'flex';
+        // Force update last frame time to prevent large delta jump
+        this.lastFrameTime = performance.now();
     }
 
     handleInput(e) {
@@ -93,14 +113,14 @@ class Game {
 
             if (this.gameState === 'PLAYING') {
                 this.update(deltaTime);
+                ThemeManager.update(deltaTime);
+                ParticleSystem.update(deltaTime);
+                updateTween(timestamp);
+                if (this.player) {
+                    CameraController.update(this.player.position.y, deltaTime);
+                }
             }
 
-            ThemeManager.update(deltaTime);
-            ParticleSystem.update(deltaTime);
-            updateTween(timestamp);
-            if (this.player) {
-                CameraController.update(this.player.position.y, deltaTime);
-            }
             SceneManager.render(CameraController.camera);
 
             requestAnimationFrame((t) => this.loop(t));
@@ -189,6 +209,9 @@ class Game {
         this.gameState = 'GAMEOVER';
         console.log('Game Over');
         AudioManager.playFail();
+
+        // Hide pause button on game over
+        document.getElementById('pause-btn').style.display = 'none';
 
         Analytics.track('game_over', { score: this.score });
 
