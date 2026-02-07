@@ -5,10 +5,10 @@ import RewardSystem from './RewardSystem.js';
 
 // USING TEST IDS FOR DEVELOPMENT
 // Replace with Real IDS for Production
-const TEST_IDS = {
-    banner: 'ca-app-pub-3940256099942544/6300978111',
-    interstitial: 'ca-app-pub-3940256099942544/1033173712',
-    rewarded: 'ca-app-pub-3940256099942544/5224354917'
+const PROD_IDS = {
+    banner: 'ca-app-pub-4190858087915294/4062394583',
+    interstitial: 'ca-app-pub-4190858087915294/2533690499',
+    rewarded: 'ca-app-pub-4190858087915294/3990350195'
 };
 
 class AdsManager {
@@ -22,14 +22,14 @@ class AdsManager {
             rewarded: 'IDLE'
         };
 
-        this.adIds = TEST_IDS;
+        this.adIds = PROD_IDS;
     }
 
     async init() {
         try {
             await AdMob.initialize({
                 requestTrackingAuthorization: true,
-                initializeForTesting: true // Set to false in production
+                initializeForTesting: false // Disabled for production
             });
             this.isInitialized = true;
             console.log('AdMob Initialized');
