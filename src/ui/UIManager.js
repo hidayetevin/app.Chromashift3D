@@ -6,16 +6,101 @@ class UIManager {
             tutorial: document.getElementById('tutorial-overlay'),
             score: document.getElementById('score'),
             bestScore: document.getElementById('best-score'),
-            bestHud: document.getElementById('best-val')
+            bestHud: document.getElementById('best-val'),
+            settings: document.getElementById('settings-overlay')
         };
 
+        this.currentLanguage = localStorage.getItem('chromashift_lang') || 'EN';
         this.setupEventListeners();
+        this.updateTexts();
     }
 
     setupEventListeners() {
-        document.getElementById('start-btn').addEventListener('click', () => {
-            // Logic handled in main.js
+        // Settings Button
+        const settingsBtn = document.getElementById('settings-btn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                this.screens.settings.style.display = 'flex';
+            });
+        }
+
+        // Settings Close
+        const settingsCloseBtn = document.getElementById('settings-close-btn');
+        if (settingsCloseBtn) {
+            settingsCloseBtn.addEventListener('click', () => {
+                this.screens.settings.style.display = 'none';
+            });
+        }
+
+        // Language Buttons
+        document.getElementById('lang-tr').addEventListener('click', () => this.setLanguage('TR'));
+        document.getElementById('lang-en').addEventListener('click', () => this.setLanguage('EN'));
+
+        // Sound Toggle
+        const soundToggle = document.getElementById('sound-toggle');
+        soundToggle.addEventListener('change', (e) => {
+            // Logic for sound can be added to AudioManager
+            console.log("Sound enabled:", e.target.checked);
         });
+    }
+
+    setLanguage(lang) {
+        this.currentLanguage = lang;
+        localStorage.setItem('chromashift_lang', lang);
+        this.updateTexts();
+
+        // Update UI Active states
+        document.getElementById('lang-tr').classList.toggle('active', lang === 'TR');
+        document.getElementById('lang-en').classList.toggle('active', lang === 'EN');
+    }
+
+    updateTexts() {
+        const texts = {
+            TR: {
+                start: "BAŞLA",
+                settings: "AYARLAR",
+                sound: "SES",
+                language: "DİL",
+                close: "KAPAT",
+                gameOver: "OYUN BİTTİ",
+                score: "SKOR",
+                best: "EN İYİ",
+                revive: "DEVAM?",
+                reviveMsg: (s) => `Skor: ${s}\nReklam izleyerek devam etmek ister misin?`,
+                continue: "DEVAM",
+                giveup: "VAZGEÇ",
+                tutorial: "Zıplamak için tıkla!"
+            },
+            EN: {
+                start: "TAP TO START",
+                settings: "SETTINGS",
+                sound: "SOUND",
+                language: "LANGUAGE",
+                close: "CLOSE",
+                gameOver: "GAME OVER",
+                score: "SCORE",
+                best: "BEST",
+                revive: "REVIVE?",
+                reviveMsg: (s) => `Score: ${s}\nWatch a short ad to continue from here?`,
+                continue: "CONTINUE",
+                giveup: "GIVE UP",
+                tutorial: "Tap to Jump!"
+            }
+        };
+
+        const t = texts[this.currentLanguage];
+
+        // Apply translations
+        document.getElementById('start-btn').innerText = t.start;
+        document.getElementById('settings-btn').innerText = t.settings;
+        document.getElementById('settings-title').innerText = t.settings;
+        document.getElementById('label-sound').innerText = t.sound;
+        document.getElementById('label-language').innerText = t.language;
+        document.getElementById('settings-close-btn').innerText = t.close;
+
+        // Update tutorial and game over labels if they exist
+        const goTitle = document.querySelector('.game-over-title');
+        if (goTitle) goTitle.innerText = t.gameOver;
     }
 
     showStartScreen(bestScore = 0) {

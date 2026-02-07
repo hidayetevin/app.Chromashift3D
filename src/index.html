@@ -1,39 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Chromashift 3D</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&family=Montserrat:wght@900&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="/style.css">
-  </head>
-  <body>
-    <div id="game-container"></div>
-    <div id="ui-layer">
-        <div id="hud">
-            <div id="score">0</div>
-            <div id="best-hud">BEST: <span id="best-val">0</span></div>
-        </div>
-        
-        <div id="tutorial-overlay">Steps appear here</div>
-        
-        <div id="start-screen">
-            <div class="logo-container">
-                <h1 class="game-title">CHROMA<br>SHIFT 3D</h1>
-            </div>
-            
-            <div class="menu-content">
-                <div id="best-score-container">BEST SCORE: <span id="best-score">0</span></div>
-                <button id="start-btn" class="glow-button">TAP TO START</button>
-            </div>
-        </div>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Chromashift 3D</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&family=Montserrat:wght@900&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <div id="game-container"></div>
+  <div id="ui-layer">
+    <div id="hud">
+      <div id="score">0</div>
+      <div id="best-hud">BEST: <span id="best-val">0</span></div>
     </div>
-    <script type="module" src="/main.js"></script>
-  </body>
+
+    <div id="tutorial-overlay">Steps appear here</div>
+
+    <div id="start-screen">
+      <div class="logo-container">
+        <h1 class="game-title">CHROMA<br>SHIFT 3D</h1>
+      </div>
+
+      <div class="menu-content">
+        <div id="best-score-container">BEST SCORE: <span id="best-score">0</span></div>
+        <button id="start-btn" class="glow-button">TAP TO START</button>
+        <button id="settings-btn" class="outline-button">SETTINGS</button>
+      </div>
+    </div>
+
+    <div id="settings-overlay" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-title" id="settings-title">SETTINGS</div>
+
+        <div class="settings-list">
+          <div class="setting-item">
+            <span id="label-sound">SOUND</span>
+            <label class="switch">
+              <input type="checkbox" id="sound-toggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <span id="label-language">LANGUAGE</span>
+            <div class="lang-selector">
+              <button id="lang-tr" class="lang-btn">TR</button>
+              <button id="lang-en" class="lang-btn active">EN</button>
+            </div>
+          </div>
+        </div>
+
+        <button id="settings-close-btn" class="modal-btn modal-btn-confirm"
+          style="margin-top: 20px; width: 100%;">CLOSE</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/main.js"></script>
+</body>
+
 </html>

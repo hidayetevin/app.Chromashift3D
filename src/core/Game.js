@@ -55,7 +55,10 @@ class Game {
 
         UIManager.hideStartScreen();
         UIManager.updateScore(0);
-        UIManager.showTutorial("Tap to Jump!");
+
+        const lang = UIManager.currentLanguage;
+        const tutorialText = lang === 'TR' ? "Zıplamak için tıkla!" : "Tap to Jump!";
+        UIManager.showTutorial(tutorialText);
     }
 
     handleInput(e) {
@@ -191,12 +194,15 @@ class Game {
 
         if (!this.hasRevived) {
             // Offer Revive with Custom Modal
-            UIManager.showConfirm(
-                "REVIVE?",
-                `Score: ${this.score}\nWatch a short ad to continue from here?`,
-                "CONTINUE",
-                "GIVE UP"
-            ).then(userWantsRevive => {
+            const lang = UIManager.currentLanguage;
+            const title = lang === 'TR' ? "DEVAM?" : "REVIVE?";
+            const msg = lang === 'TR' ?
+                `Skor: ${this.score}\nKaldığın yerden devam etmek için kısa bir reklam izlemek ister misin?` :
+                `Score: ${this.score}\nWatch a short ad to continue from here?`;
+            const btnContinue = lang === 'TR' ? "DEVAM ET" : "CONTINUE";
+            const btnGiveUp = lang === 'TR' ? "VAZGEÇ" : "GIVE UP";
+
+            UIManager.showConfirm(title, msg, btnContinue, btnGiveUp).then(userWantsRevive => {
                 if (userWantsRevive) {
                     AdsManager.showRewarded('continue').then(success => {
                         if (success) {

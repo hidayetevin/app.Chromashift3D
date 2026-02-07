@@ -50,7 +50,8 @@ body {
 /* --- HUD --- */
 #hud {
     position: absolute;
-    top: 20px;
+    top: 60px;
+    /* Moved down from 20px */
     left: 0;
     width: 100%;
     display: flex;
@@ -108,7 +109,8 @@ body {
 }
 
 .logo-container {
-    margin-top: 40px;
+    margin-top: 22vh;
+    /* Moved further down from 15vh */
     text-align: center;
 }
 
@@ -136,6 +138,8 @@ body {
 }
 
 #best-score-container {
+    display: none;
+    /* Removed as per user request */
     font-size: 14px;
     letter-spacing: 4px;
     font-weight: 700;
@@ -180,6 +184,115 @@ body {
 .glow-button:active {
     transform: scale(0.92);
     box-shadow: 0 5px 20px var(--primary-glow);
+}
+
+.outline-button {
+    width: 100%;
+    padding: 16px 40px;
+    font-size: 16px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    background: transparent;
+    color: white;
+    border: 1px solid var(--glass-border);
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 2px;
+    margin-top: -5px;
+    /* Bring it closer to start button */
+}
+
+.outline-button:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Settings Specific */
+.settings-list {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* Switch UI */
+.switch {
+    display: inline-block;
+    height: 26px;
+    position: relative;
+    width: 50px;
+}
+
+.switch input {
+    display: none;
+}
+
+.slider {
+    background-color: rgba(255, 255, 255, 0.1);
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: .4s;
+    border-radius: 34px;
+    border: 1px solid var(--glass-border);
+}
+
+.slider:before {
+    background-color: white;
+    bottom: 3px;
+    content: "";
+    height: 18px;
+    left: 4px;
+    position: absolute;
+    transition: .4s;
+    width: 18px;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: var(--primary);
+}
+
+input:checked+.slider:before {
+    transform: translateX(24px);
+}
+
+/* Language Selector */
+.lang-selector {
+    display: flex;
+    gap: 8px;
+}
+
+.lang-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: rgba(255, 255, 255, 0.5);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lang-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
 }
 
 /* --- GAME OVER SCREEN --- */
@@ -277,6 +390,8 @@ body {
     align-items: center;
     z-index: 1000;
     animation: modalFadeIn 0.3s ease;
+    pointer-events: auto;
+    /* Required for clicking inside #ui-layer */
 }
 
 .modal-content {
