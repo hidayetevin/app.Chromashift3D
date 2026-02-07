@@ -46,6 +46,22 @@ class Player {
 
         this.scene.add(this.mesh);
 
+        // Power-ups State
+        this.hasShield = false;
+        this.isRainbowMode = false;
+
+        // Shield Mesh (Hidden by default)
+        const shieldGeo = new THREE.SphereGeometry(0.55, 32, 32); // Slightly larger than player
+        const shieldMat = new THREE.MeshBasicMaterial({
+            color: 0x00FFFF,
+            transparent: true,
+            opacity: 0.3,
+            wireframe: true
+        });
+        this.shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+        this.shieldMesh.visible = false;
+        this.mesh.add(this.shieldMesh);
+
         this.velocity = new THREE.Vector3(0, 0, 0);
     }
 
@@ -163,6 +179,21 @@ class Player {
                 material.dispose();
             })
             .start();
+    }
+
+    setShield(active) {
+        this.hasShield = active;
+        this.shieldMesh.visible = active;
+    }
+
+    setRainbowMode(active) {
+        this.isRainbowMode = active;
+        if (active) {
+            this.mesh.material.emissive.setHex(0xFFFFFF);
+            this.mesh.material.color.setHex(0xFFFFFF);
+        } else {
+            this.updateAppearance();
+        }
     }
 }
 

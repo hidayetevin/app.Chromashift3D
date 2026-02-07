@@ -118,7 +118,8 @@ class CollisionDetector {
                                 hit: true,
                                 obstacle: obs,
                                 segment: targetSegment,
-                                matchColor: targetSegment.userData.color === playerState.color
+                                segment: targetSegment,
+                                matchColor: player.isRainbowMode || (targetSegment.userData.color === playerState.color)
                             };
                         }
                     }
@@ -173,7 +174,8 @@ class CollisionDetector {
                                 hit: true,
                                 obstacle: obs,
                                 segment: segment,
-                                matchColor: segment.userData.color === playerState.color
+                                segment: segment,
+                                matchColor: player.isRainbowMode || (segment.userData.color === playerState.color)
                             };
                         }
                     }
@@ -214,7 +216,8 @@ class CollisionDetector {
                             hit: true,
                             obstacle: obs,
                             segment: segment,
-                            matchColor: segment.userData.color === playerState.color
+                            segment: segment,
+                            matchColor: player.isRainbowMode || (segment.userData.color === playerState.color)
                         };
                     }
                 }
