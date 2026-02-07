@@ -24,6 +24,13 @@ class Game {
 
         // Load High Score
         this.bestScore = parseInt(localStorage.getItem('chromashift_best') || '0');
+        this.starsCollected = parseInt(localStorage.getItem('chromashift_stars') || '0');
+
+        // Combo & Time
+        this.comboCount = 0;
+        this.lastScoreTime = 0;
+        this.timeScale = 1.0;
+        this.baseTimeScale = 1.0;
     }
 
     init() {
@@ -33,7 +40,9 @@ class Game {
         this.obstacleManager = new ObstacleManager(SceneManager.scene);
 
         // UI Initial state
+        // UI Initial state
         UIManager.showStartScreen(this.bestScore);
+        UIManager.updateStars(this.starsCollected);
 
         // Input
         document.addEventListener('touchstart', (e) => this.handleInput(e), { passive: false });
@@ -50,6 +59,8 @@ class Game {
         this.hasRevived = false;
         this.score = 0;
         this.gameTime = 0;
+        this.comboCount = 0;
+        this.timeScale = 1.0;
 
         // Reset Logic if restarting logic needed (e.g. reset player pos)
 
@@ -108,8 +119,11 @@ class Game {
         if (this.gameState === 'ERROR') return;
 
         try {
-            const deltaTime = Math.min((timestamp - this.lastFrameTime) / 1000, 0.1); // Cap delta
+            let deltaTime = Math.min((timestamp - this.lastFrameTime) / 1000, 0.1); // Cap delta
             this.lastFrameTime = timestamp;
+
+            // Apply Time Scale
+            deltaTime *= this.timeScale;
 
             if (this.gameState === 'PLAYING') {
                 this.update(deltaTime);
@@ -151,6 +165,22 @@ class Game {
         ThemeManager.checkTransition(this.score);
 
         const collision = CollisionDetector.check(this.player, this.obstacleManager.getObstacles());
+        const starCollision = CollisionDetector.checkStars(this.player, this.obstacleManager.getStars());
+
+        if (starCollision) {
+            // Collect Star
+            const star = starCollision.object;
+            if (star.parent) star.parent.remove(star);
+            // Remove from active array in Manager
+            const idx = this.obstacleManager.getStars().indexOf(star);
+            if (idx > -1) this.obstacleManager.getStars().splice(idx, 1);
+
+            this.starsCollected++;
+            localStorage.setItem('chromashift_stars', this.starsCollected.toString());
+
+            UIManager.updateStars(this.starsCollected);
+            AudioManager.playSuccess(); // Or a custom 'ding'
+        }
 
         if (collision) {
             // Check Collision Type
@@ -185,13 +215,26 @@ class Game {
             }
             else if (collision.matchColor) {
                 // Success
+                // Success
                 if (!collision.obstacle.passed) {
                     this.score++;
                     collision.obstacle.passed = true;
                     UIManager.updateScore(this.score);
                     AudioManager.playSuccess();
 
-                    // Little boost or feedback?
+                    // Combo Logic
+                    const now = this.gameTime;
+                    if (now - this.lastScoreTime < 1.0) { // 1 second threshold
+                        this.comboCount++;
+                    } else {
+                        this.comboCount = 1;
+                    }
+                    this.lastScoreTime = now;
+
+                    if (this.comboCount >= 3) {
+                        this.triggerComboEffect();
+                        this.comboCount = 0; // Reset or keep incrementing? Let's reset for now to require another 3 streak
+                    }
                 }
             } else {
                 // Wrong Color -> Game Over
@@ -245,6 +288,10 @@ class Game {
     }
 
     showFinalGameOver() {
+        // Reset effects
+        this.timeScale = 1.0;
+        this.comboCount = 0;
+
         // Handle High Score
         if (this.score > this.bestScore) {
             this.bestScore = this.score;
@@ -253,6 +300,19 @@ class Game {
 
         AdsManager.showInterstitial();
         UIManager.showGameOver(this.score, this.bestScore);
+    }
+
+    triggerComboEffect() {
+        // Slow Motion
+        this.timeScale = 0.5;
+        UIManager.showComboText();
+
+        // Restore speed after 2 seconds (Real Time, so use setTimeout)
+        setTimeout(() => {
+            if (this.gameState === 'PLAYING') {
+                this.timeScale = 1.0;
+            }
+        }, 2000);
     }
 
     reviveGame() {

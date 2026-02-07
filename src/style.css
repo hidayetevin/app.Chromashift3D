@@ -106,6 +106,25 @@ body {
     font-weight: 700;
 }
 
+#star-hud {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 15px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.star-icon {
+    width: 20px;
+    height: 20px;
+    filter: drop-shadow(0 0 5px var(--accent));
+}
+
 #tutorial-overlay {
     position: absolute;
     top: 35%;
@@ -425,6 +444,21 @@ input:checked+.slider:before {
     animation: modalFadeIn 0.3s ease;
     pointer-events: auto;
     /* Required for clicking inside #ui-layer */
+}
+
+.combo-text {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-family: var(--font-heading);
+    font-size: 48px;
+    color: #fff;
+    text-shadow: 0 0 10px #fff, 0 0 20px var(--accent), 0 0 30px var(--accent);
+    pointer-events: none;
+    z-index: 2000;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+    opacity: 0;
 }
 
 .modal-content {

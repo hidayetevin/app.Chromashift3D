@@ -11,6 +11,17 @@ class CollisionDetector {
             // Optimization: Skip objects too far away on Y axis
             if (Math.abs(obs.mesh.position.y - playerPos.y) > 5) continue;
 
+            // CHECK STAR COLLISIONS (Attached to obstacles or separate?)
+            // If we access ObstacleManager here? No, better pass activeStars as arg.
+            // But 'obstacles' arg is currently just obstacles array.
+            // We should modify Game.js to pass stars, or iterate cleanly here if possible.
+            // Let's assume obstacles array contains only obstacles.
+            // We need a separate check method or pass stars.
+            // Let's modify the signature or assume stars are passed separately? 
+            // Game.js passes "this.obstacleManager.getObstacles()".
+            // We should add a new method or overload `check`.
+            // But let's stick to existing loop for obstacles first.
+
             if (obs.type === 'ring' || obs.type === 'double_circle' || obs.type === 'vertical_double_circle') {
                 // RING COLLISION LOGIC
                 // Ring geometry: Radius 2.2, Tube 0.3
@@ -207,6 +218,36 @@ class CollisionDetector {
                         };
                     }
                 }
+            }
+        }
+        return null;
+    }
+
+    checkStars(player, stars) {
+        if (!stars || stars.length === 0) return null;
+
+        const playerRadius = 0.3;
+        const playerPos = player.position;
+
+        for (let star of stars) {
+            // Simple Sphere-Sphere or Box check
+            // Star is small (0.3 radius approx)
+            const starRadius = 0.3;
+
+            const dx = Math.abs(playerPos.x - star.position.x);
+            const dy = Math.abs(playerPos.y - star.position.y);
+            // Optimization
+            if (dy > 1.0) continue;
+
+            // Distance Check
+            const dist = playerPos.distanceTo(star.position);
+
+            if (dist < (playerRadius + starRadius)) {
+                return {
+                    hit: true,
+                    type: 'star',
+                    object: star
+                };
             }
         }
         return null;

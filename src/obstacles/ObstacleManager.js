@@ -10,6 +10,11 @@ class ObstacleManager {
         this.futurePlayerColor = null; // Track expected player color for future obstacles
 
         this.setNextSwitchThreshold(); // Set initial random threshold
+
+        // Stars
+        this.activeStars = [];
+        this.starGeometry = new THREE.TetrahedronGeometry(0.3); // Low poly star
+        this.starMaterial = new THREE.MeshBasicMaterial({ color: 0xFFD700 }); // Gold
     }
 
     setNextSwitchThreshold() {
@@ -44,6 +49,19 @@ class ObstacleManager {
                 this.pool.returnToPool(obs);
             }
         });
+
+        // Update Stars (Rotation and cleanup)
+        for (let i = this.activeStars.length - 1; i >= 0; i--) {
+            const star = this.activeStars[i];
+            star.rotation.y += deltaTime * 2;
+            star.rotation.x += deltaTime;
+
+            if (star.position.y < playerPosition.y - 15) {
+                // Remove and recycle (simple remove for now, pool later if needed)
+                if (star.parent) star.parent.remove(star);
+                this.activeStars.splice(i, 1);
+            }
+        }
     }
 
     spawnNext(score, playerColor) {
@@ -93,6 +111,18 @@ class ObstacleManager {
             this.futurePlayerColor = nextColor;
         }
 
+        // Star Spawning (30% Chance, not on switchers)
+        if (type !== 'color_switcher' && Math.random() < 0.3) {
+            const star = new THREE.Mesh(this.starGeometry, this.starMaterial);
+            // Center of obstacle
+            star.position.set(spawnX, spawnY, 0);
+            // Add custom data for collision
+            star.userData = { type: 'star', active: true };
+
+            this.pool.scene.add(star);
+            this.activeStars.push(star);
+        }
+
         // Increase gap
         this.nextSpawnY += 15;
     }
@@ -109,6 +139,10 @@ class ObstacleManager {
 
     getObstacles() {
         return this.pool.activeObstacles;
+    }
+
+    getStars() {
+        return this.activeStars;
     }
 }
 

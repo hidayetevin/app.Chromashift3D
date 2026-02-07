@@ -8,7 +8,8 @@ class UIManager {
             bestScore: document.getElementById('best-score'),
             bestHud: document.getElementById('best-val'),
             settings: document.getElementById('settings-overlay'),
-            pause: document.getElementById('pause-overlay')
+            pause: document.getElementById('pause-overlay'),
+            stars: document.getElementById('star-val')
         };
 
         this.currentLanguage = localStorage.getItem('chromashift_lang') || 'EN';
@@ -181,6 +182,10 @@ class UIManager {
         if (this.screens.bestHud) this.screens.bestHud.innerText = best;
     }
 
+    updateStars(count) {
+        if (this.screens.stars) this.screens.stars.innerText = count;
+    }
+
     showTutorial(text) {
         if (this.screens.tutorial) {
             this.screens.tutorial.innerText = text;
@@ -274,6 +279,34 @@ class UIManager {
             confirmBtn.onclick = () => cleanup(true);
             cancelBtn.onclick = () => cleanup(false);
         });
+    }
+
+    showComboText() {
+        // Create pool or just create/remove for now (optimization later if needed)
+        const comboEl = document.createElement('div');
+        comboEl.className = 'combo-text';
+        comboEl.innerText = "PERFECT!";
+        // Random slight rotation
+        const rot = (Math.random() * 20) - 10;
+        comboEl.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(0)`;
+
+        document.body.appendChild(comboEl);
+
+        // Animate (using CSS or JS? CSS is easiest for simple keyframes, but here we want dynamic control)
+        // Let's use simple Web Animations API or just class trigger
+        requestAnimationFrame(() => {
+            comboEl.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(1.5)`;
+            comboEl.style.opacity = '1';
+        });
+
+        // Fade out
+        setTimeout(() => {
+            comboEl.style.opacity = '0';
+            comboEl.style.transform = `translate(-50%, -50%) rotate(${rot}deg) scale(2)`;
+            setTimeout(() => {
+                comboEl.remove();
+            }, 500);
+        }, 1000);
     }
 }
 
