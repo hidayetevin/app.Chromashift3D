@@ -96,21 +96,45 @@ class AdsManager {
     }
 
     async showInterstitial(force = false) {
-        if (!this.isInitialized) return;
+        if (!this.isInitialized) return false;
 
         const now = Date.now();
         if (!force && now - this.lastInterstitialTime < this.interstitialCooldown) {
             console.log('Interstitial Cooldown Active');
-            return;
+            return false;
         }
 
         if (this.states.interstitial === 'READY') {
-            await AdMob.showInterstitial();
-            this.lastInterstitialTime = now;
-            Analytics.track('ad_impression', { type: 'interstitial' });
+            return new Promise(async (resolve) => {
+                let resolved = false;
+                const finish = (shown) => {
+                    if (!resolved) {
+                        resolved = true;
+                        resolve(shown);
+                    }
+                };
+
+                // Add temporary listener for this show instance
+                const dismissHandler = await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+                    dismissHandler.remove();
+                    // State cleanup handled by global listener
+                    finish(true);
+                });
+
+                try {
+                    await AdMob.showInterstitial();
+                    this.lastInterstitialTime = now;
+                    Analytics.track('ad_impression', { type: 'interstitial' });
+                } catch (e) {
+                    console.error("Ad Show Failed", e);
+                    if (dismissHandler) dismissHandler.remove();
+                    finish(false);
+                }
+            });
         } else {
             console.log('Interstitial Not Ready');
             this.prepareInterstitial();
+            return false;
         }
     }
 

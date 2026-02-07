@@ -423,6 +423,15 @@ class UIManager {
     }
 
     claimReward(missionId, btnElement, rewardAmount) {
+        if (btnElement) btnElement.disabled = true;
+        import('../monetization/AdsManager.js').then(ads => {
+            ads.default.showInterstitial(true).then(() => {
+                this._processClaim(missionId, btnElement, rewardAmount);
+            });
+        });
+    }
+
+    _processClaim(missionId, btnElement, rewardAmount) {
         import('../systems/MissionSystem.js').then(module => {
             const result = module.default.claimAndReplace(missionId);
             if (result) {
