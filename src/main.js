@@ -23,6 +23,16 @@ async function bootstrap() {
     // 3. UI Bindings
     const startBtn = document.getElementById('start-btn');
     startBtn.addEventListener('click', () => {
+        // Request Fullscreen on first user interaction for True Fullscreen
+        const doc = window.document.documentElement;
+        const requestFullScreen = doc.requestFullscreen || doc.mozRequestFullScreen || doc.webkitRequestFullScreen || doc.msRequestFullscreen;
+
+        if (requestFullScreen) {
+            requestFullScreen.call(doc).catch(err => {
+                console.warn(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        }
+
         Game.start();
         Analytics.track('game_start');
     });
