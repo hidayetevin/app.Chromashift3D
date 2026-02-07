@@ -13,6 +13,7 @@ import AdsManager from '../monetization/AdsManager.js';
 import UIManager from '../ui/UIManager.js';
 import { GAME_CONFIG } from '../utils/Constants.js';
 import ParticleSystem from '../systems/ParticleSystem.js';
+import MissionSystem from '../systems/MissionSystem.js';
 
 class Game {
     constructor() {
@@ -41,8 +42,12 @@ class Game {
 
         // UI Initial state
         // UI Initial state
+        // UI Initial state
         UIManager.showStartScreen(this.bestScore);
         UIManager.updateStars(this.starsCollected);
+
+        // Missions Init
+        MissionSystem.init();
 
         // Input
         document.addEventListener('touchstart', (e) => this.handleInput(e), { passive: false });
@@ -185,6 +190,7 @@ class Game {
 
             UIManager.updateStars(this.starsCollected);
             AudioManager.playSuccess(); // Or a custom 'ding'
+            MissionSystem.onEvent('collect', 1);
         }
 
         if (collision) {
@@ -226,6 +232,7 @@ class Game {
                     collision.obstacle.passed = true;
                     UIManager.updateScore(this.score);
                     AudioManager.playSuccess();
+                    MissionSystem.onEvent('score', this.score);
 
                     // Combo Logic
                     const now = this.gameTime;

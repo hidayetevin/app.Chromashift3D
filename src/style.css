@@ -427,6 +427,49 @@ input:checked+.slider:before {
     }
 }
 
+/* Mission Styles */
+.mission-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+}
+
+.mission-item.claimed {
+    opacity: 0.5;
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.mission-desc {
+    font-size: 14px;
+    color: #ddd;
+    flex: 1;
+}
+
+.mission-progress {
+    font-size: 12px;
+    color: var(--accent);
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+.mission-status {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: #333;
+    color: #aaa;
+}
+
+.mission-status.completed {
+    background: var(--accent);
+    color: #000;
+}
+
 /* --- MODAL SYSTEM --- */
 .modal-overlay {
     position: absolute;

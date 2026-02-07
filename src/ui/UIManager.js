@@ -8,6 +8,7 @@ class UIManager {
             bestScore: document.getElementById('best-score'),
             bestHud: document.getElementById('best-val'),
             settings: document.getElementById('settings-overlay'),
+            missions: document.getElementById('missions-overlay'),
             pause: document.getElementById('pause-overlay'),
             stars: document.getElementById('star-val')
         };
@@ -40,6 +41,23 @@ class UIManager {
         if (settingsCloseBtn) {
             settingsCloseBtn.addEventListener('click', () => {
                 this.screens.settings.style.display = 'none';
+            });
+        }
+
+        // Missions Button
+        const missionsBtn = document.getElementById('missions-btn');
+        if (missionsBtn) {
+            missionsBtn.addEventListener('click', () => {
+                this.populateMissions();
+                this.screens.missions.style.display = 'flex';
+            });
+        }
+
+        // Missions Close
+        const missionsCloseBtn = document.getElementById('missions-close-btn');
+        if (missionsCloseBtn) {
+            missionsCloseBtn.addEventListener('click', () => {
+                this.screens.missions.style.display = 'none';
             });
         }
 
@@ -108,7 +126,21 @@ class UIManager {
                 pause: "DURAKLATILDI",
                 resume: "DEVAM ET",
                 restart: "YENİDEN BAŞLA",
-                quit: "OYUNDAN ÇIK"
+                quit: "OYUNDAN ÇIK",
+                missions: "GÖREVLER",
+                missionsTitle: "GÜNLÜK GÖREVLER",
+                missionStatus: {
+                    completed: "TAMAMLANDI",
+                    ready: "HAZIR",
+                    inProgress: "DEVAM EDİYOR",
+                    empty: "Aktif görev yok."
+                },
+                missionDesc: {
+                    score_10: "Tek seferde 10 Puan yap",
+                    score_50: "Tek seferde 50 Puan yap",
+                    collect_5: "5 Yıldız topla",
+                    collect_10: "10 Yıldız topla"
+                }
             },
             EN: {
                 start: "TAP TO START",
@@ -127,7 +159,21 @@ class UIManager {
                 pause: "PAUSED",
                 resume: "RESUME",
                 restart: "RESTART",
-                quit: "QUIT GAME"
+                quit: "QUIT GAME",
+                missions: "MISSIONS",
+                missionsTitle: "DAILY MISSIONS",
+                missionStatus: {
+                    completed: "COMPLETED",
+                    ready: "READY",
+                    inProgress: "IN PROGRESS",
+                    empty: "No active missions."
+                },
+                missionDesc: {
+                    score_10: "Score 10 Points in one run",
+                    score_50: "Score 50 Points in one run",
+                    collect_5: "Collect 5 Stars",
+                    collect_10: "Collect 10 Stars"
+                }
             }
         };
 
@@ -146,6 +192,11 @@ class UIManager {
         document.getElementById('resume-btn').innerText = t.resume;
         document.getElementById('restart-game-btn').innerText = t.restart;
         document.getElementById('quit-btn').innerText = t.quit;
+
+        // Update buttons
+        document.getElementById('missions-btn').innerText = t.missions;
+        document.querySelector('#missions-overlay .modal-title').innerText = t.missionsTitle;
+        document.getElementById('missions-close-btn').innerText = t.close;
 
         // Update tutorial and game over labels if they exist
         const goTitle = document.querySelector('.game-over-title');
@@ -307,6 +358,103 @@ class UIManager {
                 comboEl.remove();
             }, 500);
         }, 1000);
+    }
+
+    populateMissions() {
+        const listEl = document.getElementById('missions-list');
+        if (!listEl) return;
+
+        listEl.innerHTML = ''; // Clear
+
+        const t = this.getTranslations();
+
+        import('../systems/MissionSystem.js').then(module => {
+            const missions = module.default.getMissions();
+
+            if (missions.length === 0) {
+                listEl.innerHTML = `<div style="color:#aaa; text-align:center;">${t.missionStatus.empty}</div>`;
+                return;
+            }
+
+            missions.forEach(m => {
+                const item = document.createElement('div');
+                item.className = `mission-item ${m.claimed ? 'claimed' : ''}`;
+
+                const statusClass = m.claimed ? 'completed' : (m.current >= m.target ? 'completed' : '');
+
+                let sText = t.missionStatus.inProgress;
+                if (m.claimed) sText = t.missionStatus.completed;
+                else if (m.current >= m.target) sText = t.missionStatus.ready;
+
+                // Description Translation (Fallback to m.desc if key not found)
+                // Note: MissionSystem uses keys like 'score_10' for IDs. 
+                // Either we use m.id as key, or m.desc is just fallback.
+                // My MissionSystem implementation used hardcoded desc. 
+                // Let's rely on ID mapping if possible, or m.desc if not.
+                // Current IDs: 'score_10', 'collect_5'.
+                const descText = t.missionDesc[m.id] || m.desc;
+
+                item.innerHTML = `
+                    <div class="mission-desc">${descText}</div>
+                    <div class="mission-progress">${m.current}/${m.target}</div>
+                    <div class="mission-status ${statusClass}">${sText}</div>
+                `;
+
+                listEl.appendChild(item);
+            });
+        });
+    }
+
+    getTranslations() {
+        // Helper to get current texts object without re-defining
+        // We defined texts inside updateTexts. Let's move it to a property or static getter?
+        // For now, simpler to reconstruct or move 'texts' definition to class level.
+        // Or just lazy copypaste the structure here? No.
+        // Let's refactor updateTexts to store 'this.texts'.
+        // But since I can't easily refactor the whole method in one patch cleanly:
+        // I will just check 'this.currentLanguage' and return ad-hoc objects for now
+        // OR better: call updateTexts() and assume it updates DOM? 
+        // No, populateMissions needs strings.
+
+        // I'll duplicate the small text structure for missions here for safety/speed 
+        // OR I define `this.texts` in constructor.
+
+        // Let's just create a quick helper inside populate as I did above? 
+        // Wait, I used "const t = this.getTranslations()" in the replacement chunk.
+        // I need to implement getTranslations() or move the texts object.
+
+        // Let's IMPLEMENT getTranslations() properly.
+        const texts = {
+            TR: {
+                missionStatus: {
+                    completed: "TAMAMLANDI",
+                    ready: "HAZIR",
+                    inProgress: "DEVAM EDİYOR",
+                    empty: "Aktif görev yok."
+                },
+                missionDesc: {
+                    score_10: "Tek seferde 10 Puan yap",
+                    score_50: "Tek seferde 50 Puan yap",
+                    collect_5: "5 Yıldız topla",
+                    collect_10: "10 Yıldız topla"
+                }
+            },
+            EN: {
+                missionStatus: {
+                    completed: "COMPLETED",
+                    ready: "READY",
+                    inProgress: "IN PROGRESS",
+                    empty: "No active missions."
+                },
+                missionDesc: {
+                    score_10: "Score 10 Points in one run",
+                    score_50: "Score 50 Points in one run",
+                    collect_5: "Collect 5 Stars",
+                    collect_10: "Collect 10 Stars"
+                }
+            }
+        };
+        return texts[this.currentLanguage];
     }
 }
 
