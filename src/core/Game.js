@@ -190,7 +190,10 @@ class Game {
 
             UIManager.updateStars(this.starsCollected);
             AudioManager.playSuccess(); // Or a custom 'ding'
-            MissionSystem.onEvent('collect', 1);
+            const completed = MissionSystem.onEvent('collect', 1);
+            if (completed && completed.length > 0) {
+                this.processMissionRewards(completed);
+            }
         }
 
         if (collision) {
@@ -232,7 +235,10 @@ class Game {
                     collision.obstacle.passed = true;
                     UIManager.updateScore(this.score);
                     AudioManager.playSuccess();
-                    MissionSystem.onEvent('score', this.score);
+                    const completed = MissionSystem.onEvent('score', this.score);
+                    if (completed && completed.length > 0) {
+                        this.processMissionRewards(completed);
+                    }
 
                     // Combo Logic
                     const now = this.gameTime;
@@ -384,6 +390,18 @@ class Game {
     activateShield() {
         console.log("Shield Activated!");
         this.player.setShield(true);
+    }
+
+    processMissionRewards(missions) {
+        missions.forEach(m => {
+            if (m.reward) {
+                this.starsCollected += m.reward;
+            }
+        });
+        localStorage.setItem('chromashift_stars', this.starsCollected.toString());
+        UIManager.updateStars(this.starsCollected);
+        // Could also show a toast notification here
+        console.log("Mission Rewards Processed:", missions);
     }
 }
 

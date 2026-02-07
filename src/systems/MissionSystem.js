@@ -22,8 +22,8 @@ class MissionSystem {
     generateMissions() {
         // Simple randomized missions
         this.missions = [
-            { id: 'score_10', desc: "Score 10 Points in one run", target: 10, current: 0, claimed: false, type: 'score' },
-            { id: 'collect_5', desc: "Collect 5 Stars", target: 5, current: 0, claimed: false, type: 'collect' }
+            { id: 'score_10', desc: "Score 10 Points in one run", target: 10, current: 0, claimed: false, type: 'score', reward: Math.floor(Math.random() * 3) + 1 },
+            { id: 'collect_5', desc: "Collect 5 Stars", target: 5, current: 0, claimed: false, type: 'collect', reward: Math.floor(Math.random() * 3) + 1 }
         ];
 
         // Ensure we save the new missions
@@ -32,8 +32,12 @@ class MissionSystem {
 
     onEvent(eventType, value) {
         let updated = false;
+        let completedMissions = [];
+
         this.missions.forEach(mission => {
             if (!mission.claimed && mission.type === eventType) {
+
+                let missionCompleted = false;
 
                 // For 'score', we usually want "reach X in one run" OR "accumulate X". 
                 // Description says "in one run", so we check if value >= target.
@@ -43,7 +47,7 @@ class MissionSystem {
                     if (value > mission.current) {
                         mission.current = value;
                         if (mission.current >= mission.target) {
-                            this.completeMission(mission);
+                            missionCompleted = true;
                         }
                         updated = true;
                     }
@@ -51,14 +55,20 @@ class MissionSystem {
                     // Accumulative
                     mission.current += value;
                     if (mission.current >= mission.target) {
-                        this.completeMission(mission);
+                        missionCompleted = true;
                     }
                     updated = true;
+                }
+
+                if (missionCompleted) {
+                    this.completeMission(mission);
+                    completedMissions.push(mission);
                 }
             }
         });
 
         if (updated) this.save();
+        return completedMissions;
     }
 
     completeMission(mission) {

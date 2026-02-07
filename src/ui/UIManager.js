@@ -394,10 +394,12 @@ class UIManager {
                 // Current IDs: 'score_10', 'collect_5'.
                 const descText = t.missionDesc[m.id] || m.desc;
 
+                const rewardText = m.reward ? `<span style="color:gold; margin-left:5px; font-weight:bold;">+${m.reward}★</span>` : '';
+
                 item.innerHTML = `
                     <div class="mission-desc">${descText}</div>
                     <div class="mission-progress">${m.current}/${m.target}</div>
-                    <div class="mission-status ${statusClass}">${sText}</div>
+                    <div class="mission-status ${statusClass}">${sText} ${rewardText}</div>
                 `;
 
                 listEl.appendChild(item);
