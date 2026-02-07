@@ -11,6 +11,15 @@ class UIManager {
         };
 
         this.currentLanguage = localStorage.getItem('chromashift_lang') || 'EN';
+
+        // Sync Sound Toggle with global state
+        const soundToggle = document.getElementById('sound-toggle');
+        if (soundToggle) {
+            import('../audio/AudioManager.js').then(module => {
+                soundToggle.checked = module.default.enabled;
+            });
+        }
+
         this.setupEventListeners();
         this.updateTexts();
     }
@@ -39,8 +48,9 @@ class UIManager {
         // Sound Toggle
         const soundToggle = document.getElementById('sound-toggle');
         soundToggle.addEventListener('change', (e) => {
-            // Logic for sound can be added to AudioManager
-            console.log("Sound enabled:", e.target.checked);
+            import('../audio/AudioManager.js').then(module => {
+                module.default.setEnabled(e.target.checked);
+            });
         });
     }
 

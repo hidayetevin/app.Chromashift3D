@@ -1,11 +1,23 @@
 class AudioManager {
     constructor() {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.enabled = true;
+        const saved = localStorage.getItem('chromashift_sound');
+        this.enabled = saved !== null ? saved === 'true' : true;
+    }
+
+    setEnabled(value) {
+        this.enabled = value;
+        localStorage.setItem('chromashift_sound', value);
+    }
+
+    shouldPlay() {
+        return this.enabled && this.ctx.state !== 'suspended';
     }
 
     playTone(freq, type, duration) {
-        if (!this.enabled || this.ctx.state === 'suspended') {
+        if (!this.enabled) return;
+
+        if (this.ctx.state === 'suspended') {
             this.ctx.resume();
         }
 
