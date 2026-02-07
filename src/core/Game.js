@@ -260,9 +260,26 @@ class Game {
         this.hasRevived = true;
         this.gameState = 'PLAYING';
 
-        this.obstacleManager.clearGeneratedObstaclesNear(this.player.position.y); // Use the helper
+        // Reset Physics to prevent immediate death
+        if (this.player) {
+            this.player.velocity.set(0, 0, 0);
+
+            // Give a small jump boost to help player recover
+            PhysicsEngine.jump(this.player);
+
+            // Clear obstacles in a wider range to give player space
+            this.obstacleManager.clearGeneratedObstaclesNear(this.player.position.y);
+
+            // Ensure camera focus is updated
+            CameraController.update(this.player.position.y, 0);
+        }
 
         UIManager.hideGameOver();
+        // Force update the UI score one more time to be sure
+        UIManager.updateScore(this.score);
+
+        // Ensure pause button is visible again
+        document.getElementById('pause-btn').style.display = 'flex';
     }
 }
 

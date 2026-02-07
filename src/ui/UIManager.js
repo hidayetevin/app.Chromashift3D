@@ -216,8 +216,12 @@ class UIManager {
         }
 
         document.getElementById('go-score').innerText = score;
-        document.getElementById('go-best').innerText = bestScore;
         goScreen.style.display = 'flex';
+    }
+
+    hideGameOver() {
+        const goScreen = document.getElementById('game-over-screen');
+        if (goScreen) goScreen.style.display = 'none';
     }
 
     /**
