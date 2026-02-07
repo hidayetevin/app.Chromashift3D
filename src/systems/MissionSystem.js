@@ -21,10 +21,10 @@ class MissionSystem {
 
     generateMissions() {
         // Simple randomized missions
-        this.missions = [
-            { id: 'score_10', desc: "Score 10 Points in one run", target: 10, current: 0, claimed: false, type: 'score', reward: Math.floor(Math.random() * 3) + 1 },
-            { id: 'collect_5', desc: "Collect 5 Stars", target: 5, current: 0, claimed: false, type: 'collect', reward: Math.floor(Math.random() * 3) + 1 }
-        ];
+        // Initial Set
+        this.missions = [];
+        this.missions.push(this.generateSingleMission());
+        this.missions.push(this.generateSingleMission());
 
         // Ensure we save the new missions
         this.save();
@@ -60,9 +60,10 @@ class MissionSystem {
                     updated = true;
                 }
 
-                if (missionCompleted) {
+                if (missionCompleted && !mission.completed) {
                     this.completeMission(mission);
                     completedMissions.push(mission);
+                    updated = true;
                 }
             }
         });
@@ -73,10 +74,66 @@ class MissionSystem {
 
     completeMission(mission) {
         console.log(`Mission Completed: ${mission.desc}`);
-        mission.claimed = true; // Auto-claim logic for now, or just mark done
-        // Show notification? UIManager.showNotification(...)
-        // Giving reward?
-        // Game.starsCollected += 10?
+        mission.completed = true;
+        // We do NOT set claimed here anymore. Waiting for user interaction.
+    }
+
+    claimAndReplace(missionId) {
+        const idx = this.missions.findIndex(m => m.id === missionId);
+        if (idx === -1) return null;
+
+        const mission = this.missions[idx];
+        if (!mission.completed) return null; // Can't claim not completed
+
+        // Claimed!
+        const reward = mission.reward;
+
+        // Remove old mission and add new one
+        this.missions.splice(idx, 1);
+
+        const newMission = this.generateSingleMission();
+        // Ensure unique ID just in case
+        newMission.id = newMission.id + '_' + Date.now();
+        this.missions.push(newMission);
+
+        this.save();
+        return { reward, newMission };
+    }
+
+    generateSingleMission() {
+        // Pool of potential missions
+        const types = ['score', 'collect'];
+        const type = types[Math.floor(Math.random() * types.length)];
+
+        let mission = {};
+        if (type === 'score') {
+            const targets = [10, 20, 30, 50];
+            const target = targets[Math.floor(Math.random() * targets.length)];
+            mission = {
+                id: `score_${target}`,
+                desc: `Score ${target} Points in one run`,
+                target: target,
+                current: 0,
+                completed: false,
+                claimed: false, // Legacy prop just in case
+                type: 'score',
+                reward: Math.floor(Math.random() * 3) + 1
+            };
+        } else {
+            const targets = [5, 10, 15];
+            const target = targets[Math.floor(Math.random() * targets.length)];
+            mission = {
+                id: `collect_${target}`,
+                desc: `Collect ${target} Stars`,
+                target: target,
+                current: 0,
+                completed: false,
+                claimed: false,
+                type: 'collect',
+                reward: Math.floor(Math.random() * 3) + 1
+            };
+        }
+        return mission;
     }
 
     save() {

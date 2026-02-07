@@ -190,10 +190,9 @@ class Game {
 
             UIManager.updateStars(this.starsCollected);
             AudioManager.playSuccess(); // Or a custom 'ding'
-            const completed = MissionSystem.onEvent('collect', 1);
-            if (completed && completed.length > 0) {
-                this.processMissionRewards(completed);
-            }
+            UIManager.updateStars(this.starsCollected);
+            AudioManager.playSuccess(); // Or a custom 'ding'
+            MissionSystem.onEvent('collect', 1);
         }
 
         if (collision) {
@@ -235,10 +234,9 @@ class Game {
                     collision.obstacle.passed = true;
                     UIManager.updateScore(this.score);
                     AudioManager.playSuccess();
-                    const completed = MissionSystem.onEvent('score', this.score);
-                    if (completed && completed.length > 0) {
-                        this.processMissionRewards(completed);
-                    }
+                    UIManager.updateScore(this.score);
+                    AudioManager.playSuccess();
+                    MissionSystem.onEvent('score', this.score);
 
                     // Combo Logic
                     const now = this.gameTime;
@@ -392,17 +390,8 @@ class Game {
         this.player.setShield(true);
     }
 
-    processMissionRewards(missions) {
-        missions.forEach(m => {
-            if (m.reward) {
-                this.starsCollected += m.reward;
-            }
-        });
-        localStorage.setItem('chromashift_stars', this.starsCollected.toString());
-        UIManager.updateStars(this.starsCollected);
-        // Could also show a toast notification here
-        console.log("Mission Rewards Processed:", missions);
-    }
+
+    // processMissionRewards removed as claiming is manual now
 }
 
 export default new Game();

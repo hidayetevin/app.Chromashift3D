@@ -386,25 +386,103 @@ class UIManager {
                 if (m.claimed) sText = t.missionStatus.completed;
                 else if (m.current >= m.target) sText = t.missionStatus.ready;
 
-                // Description Translation (Fallback to m.desc if key not found)
-                // Note: MissionSystem uses keys like 'score_10' for IDs. 
-                // Either we use m.id as key, or m.desc is just fallback.
-                // My MissionSystem implementation used hardcoded desc. 
-                // Let's rely on ID mapping if possible, or m.desc if not.
-                // Current IDs: 'score_10', 'collect_5'.
+                // Description Translation
                 const descText = t.missionDesc[m.id] || m.desc;
+                const rewardText = `<span style="color:gold; font-weight:bold;">${m.reward}★</span>`;
 
-                const rewardText = m.reward ? `<span style="color:gold; margin-left:5px; font-weight:bold;">+${m.reward}★</span>` : '';
+                // If completed and NOT claimed: Show Claim Button
+                // If not completed: Show Status
+                // If claimed: Should theoretically be removed by system, but if not, show completed
+
+                let actionHtml = '';
+                if (m.completed) {
+                    actionHtml = `<button class="claim-btn glow-button" data-id="${m.id}" data-reward="${m.reward}" style="padding: 5px 10px; font-size: 12px;">${t.missionStatus.claim} ${rewardText}</button>`;
+                } else {
+                    actionHtml = `<div class="mission-status ${statusClass}">${sText} ${rewardText}</div>`;
+                }
 
                 item.innerHTML = `
                     <div class="mission-desc">${descText}</div>
                     <div class="mission-progress">${m.current}/${m.target}</div>
-                    <div class="mission-status ${statusClass}">${sText} ${rewardText}</div>
+                    ${actionHtml}
                 `;
 
                 listEl.appendChild(item);
             });
+
+            // Bind Claim Buttons
+            const claimBtns = listEl.querySelectorAll('.claim-btn');
+            claimBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const mid = e.target.closest('button').dataset.id; // closest to handle clicks on span
+                    const reward = parseInt(e.target.closest('button').dataset.reward);
+                    this.claimReward(mid, btn, reward);
+                });
+            });
         });
+    }
+
+    claimReward(missionId, btnElement, rewardAmount) {
+        import('../systems/MissionSystem.js').then(module => {
+            const result = module.default.claimAndReplace(missionId);
+            if (result) {
+                // Animate stars
+                this.animateStarReward(btnElement, result.reward);
+
+                // Update Game Stars
+                import('../core/Game.js').then(game => {
+                    game.default.starsCollected += result.reward;
+                    localStorage.setItem('chromashift_stars', game.default.starsCollected.toString());
+                    this.updateStars(game.default.starsCollected);
+                });
+
+                // Refresh List after delay
+                setTimeout(() => {
+                    this.populateMissions();
+                }, 1000); // Wait for animation start
+            }
+        });
+    }
+
+    animateStarReward(startElement, amount) {
+        const rect = startElement.getBoundingClientRect();
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height / 2;
+
+        // Target: Star HUD
+        const starHud = document.getElementById('star-hud'); // Or #star-val
+        const targetRect = starHud.getBoundingClientRect();
+        const targetX = targetRect.left + targetRect.width / 2;
+        const targetY = targetRect.top + targetRect.height / 2;
+
+        for (let i = 0; i < amount; i++) {
+            const star = document.createElement('div');
+            star.innerHTML = '★'; // Or SVG
+            star.style.position = 'fixed';
+            star.style.left = `${startX}px`;
+            star.style.top = `${startY}px`;
+            star.style.color = 'gold';
+            star.style.fontSize = '20px';
+            star.style.zIndex = '3000';
+            star.style.pointerEvents = 'none';
+            star.style.textShadow = '0 0 10px gold';
+            star.style.transition = 'all 0.8s ease-in-out';
+
+            document.body.appendChild(star);
+
+            // Staggered animation
+            setTimeout(() => {
+                star.style.left = `${targetX}px`;
+                star.style.top = `${targetY}px`;
+                star.style.opacity = '0';
+                star.style.transform = 'scale(0.5)';
+            }, i * 100 + 50);
+
+            // Cleanup
+            setTimeout(() => {
+                star.remove();
+            }, 1000 + (i * 100));
+        }
     }
 
     getTranslations() {
@@ -432,7 +510,8 @@ class UIManager {
                     completed: "TAMAMLANDI",
                     ready: "HAZIR",
                     inProgress: "DEVAM EDİYOR",
-                    empty: "Aktif görev yok."
+                    empty: "Aktif görev yok.",
+                    claim: "ÖDÜL AL"
                 },
                 missionDesc: {
                     score_10: "Tek seferde 10 Puan yap",
@@ -446,7 +525,8 @@ class UIManager {
                     completed: "COMPLETED",
                     ready: "READY",
                     inProgress: "IN PROGRESS",
-                    empty: "No active missions."
+                    empty: "No active missions.",
+                    claim: "CLAIM"
                 },
                 missionDesc: {
                     score_10: "Score 10 Points in one run",
