@@ -1,4 +1,4 @@
-package com.hidayetevin.chromashift3d;
+package com.evnlabs.choromashif3d;
 
 import android.os.Bundle;
 import android.view.View;
