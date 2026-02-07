@@ -4,7 +4,7 @@ import Analytics from '../analytics/Analytics.js';
 import RewardSystem from './RewardSystem.js';
 
 // USING TEST IDS FOR DEVELOPMENT
-// Replace with Real IDs for Production
+// Replace with Real IDS for Production
 const TEST_IDS = {
     banner: 'ca-app-pub-3940256099942544/6300978111',
     interstitial: 'ca-app-pub-3940256099942544/1033173712',
@@ -108,31 +108,42 @@ class AdsManager {
             return new Promise(async (resolve) => {
                 let resolved = false;
                 const finish = (shown) => {
-                    if (!resolved) {
-                        resolved = true;
-                        resolve(shown);
-                    }
+                    if (resolved) return;
+                    resolved = true;
+                    resolve(shown);
                 };
 
-                // Add temporary listener for this show instance
-                const dismissHandler = await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
-                    dismissHandler.remove();
-                    // State cleanup handled by global listener
-                    finish(true);
-                });
+                let dismissHandler = null;
+                let failedHandler = null;
 
                 try {
+                    dismissHandler = await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
+                        if (dismissHandler) dismissHandler.remove();
+                        if (failedHandler) failedHandler.remove();
+                        finish(true);
+                    });
+
+                    failedHandler = await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => {
+                        if (dismissHandler) dismissHandler.remove();
+                        if (failedHandler) failedHandler.remove();
+                        finish(false);
+                    });
+
                     await AdMob.showInterstitial();
                     this.lastInterstitialTime = now;
                     Analytics.track('ad_impression', { type: 'interstitial' });
+
+                    // Watchdog: resolve after 2 minutes anyway
+                    setTimeout(() => finish(false), 120000);
                 } catch (e) {
                     console.error("Ad Show Failed", e);
                     if (dismissHandler) dismissHandler.remove();
+                    if (failedHandler) failedHandler.remove();
                     finish(false);
                 }
             });
         } else {
-            console.log('Interstitial Not Ready');
+            console.log('Interstitial Not Ready, proceding without ad');
             this.prepareInterstitial();
             return false;
         }
@@ -158,33 +169,62 @@ class AdsManager {
         }
 
         if (this.states.rewarded !== 'READY') {
-            console.log('Rewarded Ad Not Ready');
+            console.warn('Rewarded Ad Not Ready - Failing gracefully');
             this.prepareRewarded();
             return false;
         }
 
-        return new Promise((resolve) => {
+        return new Promise(async (resolve) => {
             let earned = false;
-            const onReward = AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
-                earned = true;
-            });
-            const onDismiss = AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
-                onReward.remove();
-                onDismiss.remove();
-                if (earned) {
-                    RewardSystem.grantReward(rewardType);
-                    Analytics.track('rewarded_ad_complete', { type: rewardType });
-                    resolve(true);
-                } else {
-                    resolve(false);
-                }
-            });
+            let resolved = false;
 
-            AdMob.showRewardVideoAd().catch(() => {
-                onReward.remove();
-                onDismiss.remove();
-                resolve(false);
-            });
+            const finish = (result) => {
+                if (resolved) return;
+                resolved = true;
+                resolve(result);
+            };
+
+            let rewardListener = null;
+            let dismissListener = null;
+            let failedListener = null;
+
+            try {
+                rewardListener = await AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
+                    earned = true;
+                });
+
+                dismissListener = await AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
+                    if (rewardListener) rewardListener.remove();
+                    if (dismissListener) dismissListener.remove();
+                    if (failedListener) failedListener.remove();
+
+                    if (earned) {
+                        RewardSystem.grantReward(rewardType);
+                        Analytics.track('rewarded_ad_complete', { type: rewardType });
+                        finish(true);
+                    } else {
+                        finish(false);
+                    }
+                });
+
+                failedListener = await AdMob.addListener(RewardAdPluginEvents.FailedToShow, () => {
+                    if (rewardListener) rewardListener.remove();
+                    if (dismissListener) dismissListener.remove();
+                    if (failedListener) failedListener.remove();
+                    finish(false);
+                });
+
+                await AdMob.showRewardVideoAd();
+
+                // Watchdog
+                setTimeout(() => finish(false), 120000);
+            } catch (e) {
+                console.error("Rewarded Ad Error", e);
+                if (rewardListener) rewardListener.remove();
+                if (dismissListener) dismissListener.remove();
+                if (failedListener) failedListener.remove();
+                finish(false);
+            }
         });
     }
 }

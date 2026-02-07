@@ -1,5 +1,5 @@
 # CHROMASHIFT 3D – GAME DESIGN DOCUMENT (GDD)
-## Version 2.1 - UPDATED EDITION (Physics & Sync Fixes)
+## Version 2.2 - REWARDED PROGRESSION UPDATE
 
 ## 1. GENEL BAKIŞ
 Chromashift 3D, Color Switch DNA'sını temel alan; **renk + şekil eşleşmesi** ve **dikey fizik tabanlı zıplama** mekaniğiyle ayrışan, tek parmakla oynanan hiper-casual bir mobil oyundur.
@@ -415,13 +415,13 @@ Rotation Speed = 60 + (score / 20) * 15
 - ✅ 1 oyun modu (endless)
 - ✅ 4 tema + 1 bonus (Beyond Void)
 - ✅ 3 şekil sistemi
-- ✅ Full reklam entegrasyonu
+- ✅ Full reklam entegrasyonu (Banner, Interstitial, Rewarded)
+- ✅ Günlük Görevler (Daily Missions) ve Manuel Ödül Talep Sistemi
 - ✅ Analytics tracking
 - ✅ Local high score
 
 ### Dahil Olmayanlar
 - ❌ Multiplayer
-- ❌ Daily challenges
 - ❌ In-app purchases
 - ❌ Leaderboard (global)
 - ❌ Achievement sistemi

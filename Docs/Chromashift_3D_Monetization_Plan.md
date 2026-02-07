@@ -5,10 +5,8 @@
 Chromashift 3D için monetizasyon stratejisi, **oyunu bölmeden**, oyuncunun doğal akış içinde reklamı kabul etmesini hedefler.
 
 Ana gelir kaynağı:
-- **Rewarded Ads** (Primary Revenue)
-
-Destekleyici gelir:
-- **Interstitial Ads** (Secondary Revenue)
+- **Rewarded Ads** (Primary: Continue / Revive)
+- **Interstitial Ads** (Secondary: Mission Claims, Screen Transitions)
 
 In-App Purchase zorunlu değildir (MVP'de yok).
 
@@ -45,6 +43,22 @@ In-App Purchase zorunlu değildir (MVP'de yok).
 │  🏠 HOME                    │
 └─────────────────────────────┘
 ```
+
+---
+
+## 2.6 Daily Mission Claims (New Monetization Path)
+Oyuncular tamamladıkları günlük görevlerin ödüllerini (Yıldız/Para) almak için reklam izlemeyi kabul ederler.
+
+### Mekanizma:
+- Görev Tamamlanır → HUD'da bildirim çıkar.
+- Missions ekranı açılır → "CLAIM / ÖDÜL AL" butonu görünür.
+- Butona tıklandığında **Interstitial Ad** tetiklenir.
+- Reklam bittiğinde ödül (1-3 Yıldız) animasyonla verilir.
+- Eski görev silinir, yeni görev üretilir.
+
+### Avantajı:
+- Oyuncunun kontrolünde (opt-in) hissettiren bir Interstitial kullanımı.
+- Görevlerin sürekliliği sayesinde düzenli reklam gösterim imkanı.
 
 ### 2.3 Reklam İzleyince Ne Olur? (DETAYLI MEKANİZMA)
 
