@@ -78,6 +78,58 @@ class UIManager {
         document.getElementById('go-best').innerText = bestScore;
         goScreen.style.display = 'flex';
     }
+
+    /**
+     * Shows a custom game-themed confirmation modal.
+     * @param {string} title - Title of the modal.
+     * @param {string} text - Description/Message.
+     * @param {string} confirmText - Label for confirm button.
+     * @param {string} cancelText - Label for cancel button.
+     * @returns {Promise<boolean>} - Resolves to true if confirmed, false otherwise.
+     */
+    showConfirm(title, text, confirmText = "YES", cancelText = "NO") {
+        return new Promise((resolve) => {
+            let overlay = document.getElementById('custom-modal-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'custom-modal-overlay';
+                overlay.className = 'modal-overlay';
+                overlay.innerHTML = `
+                    <div class="modal-content">
+                        <div id="modal-title" class="modal-title"></div>
+                        <div id="modal-text" class="modal-text"></div>
+                        <div class="modal-buttons">
+                            <button id="modal-cancel-btn" class="modal-btn modal-btn-cancel"></button>
+                            <button id="modal-confirm-btn" class="modal-btn modal-btn-confirm"></button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+
+            const titleEl = document.getElementById('modal-title');
+            const textEl = document.getElementById('modal-text');
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+
+            titleEl.innerText = title;
+            textEl.innerText = text;
+            confirmBtn.innerText = confirmText;
+            cancelBtn.innerText = cancelText;
+
+            overlay.style.display = 'flex';
+
+            const cleanup = (result) => {
+                overlay.style.display = 'none';
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+                resolve(result);
+            };
+
+            confirmBtn.onclick = () => cleanup(true);
+            cancelBtn.onclick = () => cleanup(false);
+        });
+    }
 }
 
 export default new UIManager();

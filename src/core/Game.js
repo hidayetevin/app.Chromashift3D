@@ -190,20 +190,26 @@ class Game {
         Analytics.track('game_over', { score: this.score });
 
         if (!this.hasRevived) {
-            // Offer Revive
-            const userWantsRevive = confirm(`Score: ${this.score}\nWatch Ad to Continue?`);
-            if (userWantsRevive) {
-                AdsManager.showRewarded('continue').then(success => {
-                    if (success) {
-                        this.reviveGame();
-                    } else {
-                        // Ad failed
-                        this.showFinalGameOver();
-                    }
-                });
-            } else {
-                this.showFinalGameOver();
-            }
+            // Offer Revive with Custom Modal
+            UIManager.showConfirm(
+                "REVIVE?",
+                `Score: ${this.score}\nWatch a short ad to continue from here?`,
+                "CONTINUE",
+                "GIVE UP"
+            ).then(userWantsRevive => {
+                if (userWantsRevive) {
+                    AdsManager.showRewarded('continue').then(success => {
+                        if (success) {
+                            this.reviveGame();
+                        } else {
+                            // Ad failed
+                            this.showFinalGameOver();
+                        }
+                    });
+                } else {
+                    this.showFinalGameOver();
+                }
+            });
         } else {
             this.showFinalGameOver();
         }
