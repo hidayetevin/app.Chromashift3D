@@ -149,6 +149,14 @@ class UIManager {
         // Update tutorial and game over labels if they exist
         const goTitle = document.querySelector('.game-over-title');
         if (goTitle) goTitle.innerText = t.gameOver;
+
+        // Ensure language buttons reflect the current state
+        const trBtn = document.getElementById('lang-tr');
+        const enBtn = document.getElementById('lang-en');
+        if (trBtn && enBtn) {
+            trBtn.classList.toggle('active', this.currentLanguage === 'TR');
+            enBtn.classList.toggle('active', this.currentLanguage === 'EN');
+        }
     }
 
     showStartScreen(bestScore = 0) {
