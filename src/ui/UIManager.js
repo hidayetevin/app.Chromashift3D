@@ -61,6 +61,16 @@ class UIManager {
             });
         }
 
+        // Ad Reward Button
+        const adRewardBtn = document.getElementById('ad-reward-btn');
+        if (adRewardBtn) {
+            adRewardBtn.addEventListener('click', () => {
+                import('../monetization/AdsManager.js').then(ads => {
+                    ads.default.showRewarded('stars_10');
+                });
+            });
+        }
+
         // Language Buttons
         document.getElementById('lang-tr').addEventListener('click', () => this.setLanguage('TR'));
         document.getElementById('lang-en').addEventListener('click', () => this.setLanguage('EN'));
@@ -130,6 +140,7 @@ class UIManager {
                 reviveMsg: (s) => `Skor: ${s}\nReklam izleyerek devam etmek ister misin?`,
                 continue: "DEVAM",
                 giveup: "VAZGEÇ",
+                watchAd: "10 ⭐ İÇİN REKLAM İZLE",
                 tutorial: "Zıplamak için tıkla!",
                 pause: "DURAKLATILDI",
                 resume: "DEVAM ET",
@@ -164,6 +175,7 @@ class UIManager {
                 reviveMsg: (s) => `Score: ${s}\nWatch a short ad to continue from here?`,
                 continue: "CONTINUE",
                 giveup: "GIVE UP",
+                watchAd: "WATCH AD (10 ⭐)",
                 tutorial: "Tap to Jump!",
                 pause: "PAUSED",
                 resume: "RESUME",
@@ -191,13 +203,16 @@ class UIManager {
     updateTexts() {
         const t = this.getTexts()[this.currentLanguage];
 
-        // Apply translations
         document.getElementById('start-btn').innerText = t.start;
         document.getElementById('settings-btn').innerText = t.settings;
         document.getElementById('settings-title').innerText = t.settings;
         document.getElementById('label-sound').innerText = t.sound;
         document.getElementById('label-language').innerText = t.language;
         document.getElementById('settings-close-btn').innerText = t.close;
+
+        // Ad update
+        const adBtn = document.getElementById('ad-reward-btn');
+        if (adBtn) adBtn.innerText = t.watchAd;
 
         // Pause translations
         document.getElementById('pause-title').innerText = t.pause;
