@@ -88,12 +88,20 @@ class UIManager {
 
         // Restart Game Button (from Pause)
         document.getElementById('restart-game-btn').addEventListener('click', () => {
-            window.location.reload(); // Simple approach for now
+            import('../monetization/AdsManager.js').then(ads => {
+                ads.default.showInterstitial().finally(() => {
+                    window.location.reload();
+                });
+            }).catch(() => window.location.reload());
         });
 
         // Quit Button
         document.getElementById('quit-btn').addEventListener('click', () => {
-            window.location.reload(); // Returns to main menu by default
+            import('../monetization/AdsManager.js').then(ads => {
+                ads.default.showInterstitial().finally(() => {
+                    window.location.reload(); // Returns to main menu by default
+                });
+            }).catch(() => window.location.reload());
         });
     }
 
@@ -267,7 +275,11 @@ class UIManager {
             document.body.appendChild(goScreen);
 
             document.getElementById('restart-btn').addEventListener('click', () => {
-                window.location.reload();
+                import('../monetization/AdsManager.js').then(ads => {
+                    ads.default.showInterstitial().finally(() => {
+                        window.location.reload();
+                    });
+                }).catch(() => window.location.reload());
             });
         }
 

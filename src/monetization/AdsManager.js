@@ -14,8 +14,11 @@ const PROD_IDS = {
 class AdsManager {
     constructor() {
         this.isInitialized = false;
-        this.lastInterstitialTime = 0;
         this.interstitialCooldown = 30000; // 30s cooldown
+
+        // Load persisted tracking data
+        this.lastInterstitialTime = parseInt(localStorage.getItem('chromashift_ad_time') || '0');
+        this.restartCount = parseInt(localStorage.getItem('chromashift_restarts') || '0');
 
         this.states = {
             interstitial: 'IDLE',
@@ -99,9 +102,24 @@ class AdsManager {
         if (!this.isInitialized) return false;
 
         const now = Date.now();
-        if (!force && now - this.lastInterstitialTime < this.interstitialCooldown) {
-            console.log('Interstitial Cooldown Active');
-            return false;
+
+        if (!force) {
+            // Wait at least 30 seconds since the last ad
+            if (now - this.lastInterstitialTime < this.interstitialCooldown) {
+                console.log('Interstitial Cooldown Active');
+                return false;
+            }
+
+            // Increment restart/transition count
+            this.restartCount++;
+            localStorage.setItem('chromashift_restarts', this.restartCount.toString());
+
+            // Show exactly on every 3rd try (never on the 1st restart)
+            const INTERSTITIAL_FREQUENCY = 3;
+            if (this.restartCount % INTERSTITIAL_FREQUENCY !== 0) {
+                console.log(`Interstitial skipped. Transition count: ${this.restartCount}`);
+                return false;
+            }
         }
 
         if (this.states.interstitial === 'READY') {
@@ -131,6 +149,7 @@ class AdsManager {
 
                     await AdMob.showInterstitial();
                     this.lastInterstitialTime = now;
+                    localStorage.setItem('chromashift_ad_time', this.lastInterstitialTime.toString());
                     Analytics.track('ad_impression', { type: 'interstitial' });
 
                     // Watchdog: resolve after 2 minutes anyway

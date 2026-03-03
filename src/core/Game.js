@@ -332,7 +332,6 @@ class Game {
             localStorage.setItem('chromashift_best', this.bestScore.toString());
         }
 
-        AdsManager.showInterstitial();
         UIManager.showGameOver(this.score, this.bestScore);
     }
 
