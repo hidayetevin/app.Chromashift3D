@@ -292,36 +292,6 @@ class Game {
 
         Analytics.track('game_over', { score: this.score });
 
-        if (!this.hasRevived) {
-            // Offer Revive with Custom Modal
-            const lang = UIManager.currentLanguage;
-            const title = lang === 'TR' ? "DEVAM?" : "REVIVE?";
-            const msg = lang === 'TR' ?
-                `Skor: ${this.score}\nKaldığın yerden devam etmek için kısa bir reklam izlemek ister misin?` :
-                `Score: ${this.score}\nWatch a short ad to continue from here?`;
-            const btnContinue = lang === 'TR' ? "DEVAM ET" : "CONTINUE";
-            const btnGiveUp = lang === 'TR' ? "VAZGEÇ" : "GIVE UP";
-
-            UIManager.showConfirm(title, msg, btnContinue, btnGiveUp).then(userWantsRevive => {
-                if (userWantsRevive) {
-                    AdsManager.showRewarded('continue').then(success => {
-                        if (success) {
-                            this.reviveGame();
-                        } else {
-                            // Ad failed
-                            this.showFinalGameOver();
-                        }
-                    });
-                } else {
-                    this.showFinalGameOver();
-                }
-            });
-        } else {
-            this.showFinalGameOver();
-        }
-    }
-
-    showFinalGameOver() {
         // Reset effects
         this.timeScale = 1.0;
         this.comboCount = 0;
@@ -333,46 +303,6 @@ class Game {
         }
 
         UIManager.showGameOver(this.score, this.bestScore);
-    }
-
-    triggerComboEffect() {
-        // Slow Motion
-        this.timeScale = 0.5;
-        UIManager.showComboText();
-
-        // Restore speed after 2 seconds (Real Time, so use setTimeout)
-        setTimeout(() => {
-            if (this.gameState === 'PLAYING') {
-                this.timeScale = 1.0;
-            }
-        }, 2000);
-    }
-
-    reviveGame() {
-        console.log('Reviving...');
-        this.hasRevived = true;
-        this.gameState = 'PLAYING';
-
-        // Reset Physics to prevent immediate death
-        if (this.player) {
-            this.player.velocity.set(0, 0, 0);
-
-            // Give a small jump boost to help player recover
-            PhysicsEngine.jump(this.player);
-
-            // Clear obstacles in a wider range to give player space
-            this.obstacleManager.clearGeneratedObstaclesNear(this.player.position.y);
-
-            // Ensure camera focus is updated
-            CameraController.update(this.player.position.y, 0);
-        }
-
-        UIManager.hideGameOver();
-        // Force update the UI score one more time to be sure
-        UIManager.updateScore(this.score);
-
-        // Ensure pause button is visible again
-        document.getElementById('pause-btn').style.display = 'flex';
     }
 
     activateMagnet() {
