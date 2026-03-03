@@ -115,8 +115,8 @@ class UIManager {
         document.getElementById('lang-en').classList.toggle('active', lang === 'EN');
     }
 
-    updateTexts() {
-        const texts = {
+    getTexts() {
+        return {
             TR: {
                 start: "BAŞLA",
                 settings: "AYARLAR",
@@ -134,6 +134,7 @@ class UIManager {
                 pause: "DURAKLATILDI",
                 resume: "DEVAM ET",
                 restart: "YENİDEN BAŞLA",
+                tryAgain: "TEKRAR DENE",
                 quit: "OYUNDAN ÇIK",
                 missions: "GÖREVLER",
                 missionsTitle: "GÜNLÜK GÖREVLER",
@@ -167,6 +168,7 @@ class UIManager {
                 pause: "PAUSED",
                 resume: "RESUME",
                 restart: "RESTART",
+                tryAgain: "TRY AGAIN",
                 quit: "QUIT GAME",
                 missions: "MISSIONS",
                 missionsTitle: "DAILY MISSIONS",
@@ -184,8 +186,10 @@ class UIManager {
                 }
             }
         };
+    }
 
-        const t = texts[this.currentLanguage];
+    updateTexts() {
+        const t = this.getTexts()[this.currentLanguage];
 
         // Apply translations
         document.getElementById('start-btn').innerText = t.start;
@@ -209,6 +213,15 @@ class UIManager {
         // Update tutorial and game over labels if they exist
         const goTitle = document.querySelector('.game-over-title');
         if (goTitle) goTitle.innerText = t.gameOver;
+
+        const goScoreLabel = document.getElementById('go-score-label');
+        if (goScoreLabel) goScoreLabel.innerText = t.score;
+
+        const goBestLabel = document.getElementById('go-best-label');
+        if (goBestLabel) goBestLabel.innerText = t.best;
+
+        const tryAgainBtn = document.getElementById('restart-btn');
+        if (tryAgainBtn) tryAgainBtn.innerText = t.tryAgain;
 
         // Ensure language buttons reflect the current state
         const trBtn = document.getElementById('lang-tr');
@@ -257,20 +270,22 @@ class UIManager {
 
     showGameOver(score, bestScore) {
         let goScreen = document.getElementById('game-over-screen');
+        const t = this.getTexts()[this.currentLanguage] || this.getTexts()['EN'];
+
         if (!goScreen) {
             goScreen = document.createElement('div');
             goScreen.id = 'game-over-screen';
             goScreen.innerHTML = `
-                <h1 class="game-over-title">GAME OVER</h1>
+                <h1 class="game-over-title">${t.gameOver}</h1>
                 <div class="stat-container">
-                    <span class="stat-label">SCORE</span>
+                    <span class="stat-label" id="go-score-label">${t.score}</span>
                     <span id="go-score" class="stat-value">0</span>
                     <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-                        <span class="stat-label">BEST</span>
+                        <span class="stat-label" id="go-best-label">${t.best}</span>
                         <span id="go-best" class="stat-value" style="font-size: 24px; color: var(--accent);">0</span>
                     </div>
                 </div>
-                <button id="restart-btn" class="glow-button">TRY AGAIN</button>
+                <button id="restart-btn" class="glow-button">${t.tryAgain}</button>
             `;
             document.body.appendChild(goScreen);
 
