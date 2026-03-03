@@ -25,7 +25,31 @@ class AdsManager {
             rewarded: 'IDLE'
         };
 
+        this.retryCount = {
+            interstitial: 0,
+            rewarded: 0
+        };
+
+        // Ad Pool Architecture
+        // Note: Capacitor AdMob API natively supports holding max 1 preloaded ad per ID in memory
+        this.pool = {
+            interstitial: { ready: 0, max: 1 },
+            rewarded: { ready: 0, max: 1 }
+        };
+
         this.adIds = PROD_IDS;
+    }
+
+    refillPool(type) {
+        if (!this.isInitialized) return;
+
+        if (type === 'interstitial' && this.pool.interstitial.ready < this.pool.interstitial.max) {
+            console.log('Ad Pool: Refilling Interstitial...');
+            this.prepareInterstitial();
+        } else if (type === 'rewarded' && this.pool.rewarded.ready < this.pool.rewarded.max) {
+            console.log('Ad Pool: Refilling Rewarded...');
+            this.prepareRewarded();
+        }
     }
 
     async init() {
@@ -38,9 +62,19 @@ class AdsManager {
             console.log('AdMob Initialized');
 
             this.setupListeners();
+
+            // Stagger downloads so they don't block logic on slower devices
             this.showBanner();
-            this.prepareInterstitial();
-            this.prepareRewarded();
+
+            // Interstitial: start filling pool 1 second after startup
+            setTimeout(() => {
+                this.refillPool('interstitial');
+            }, 1000);
+
+            // Rewarded: start filling pool 2 seconds after startup
+            setTimeout(() => {
+                this.refillPool('rewarded');
+            }, 2000);
         } catch (error) {
             console.warn('AdMob Init Failed (Web Mode?):', error);
         }
@@ -50,27 +84,41 @@ class AdsManager {
         // Interstitial
         AdMob.addListener(InterstitialAdPluginEvents.Loaded, () => {
             this.states.interstitial = 'READY';
+            this.pool.interstitial.ready = 1;
+            this.retryCount.interstitial = 0; // Reset retries on success
+            console.log(`Ad Pool Update: Interstitial Ready (${this.pool.interstitial.ready}/${this.pool.interstitial.max})`);
         });
         AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
             this.states.interstitial = 'IDLE';
-            this.prepareInterstitial();
+            this.pool.interstitial.ready = 0;
+            this.refillPool('interstitial'); // Immediately queue refill
         });
         AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => {
             this.states.interstitial = 'ERROR';
-            setTimeout(() => this.prepareInterstitial(), 15000);
+            this.pool.interstitial.ready = 0;
+            const waitTime = Math.min(5000 * Math.pow(2, this.retryCount.interstitial), 60000);
+            this.retryCount.interstitial++;
+            setTimeout(() => this.refillPool('interstitial'), waitTime);
         });
 
         // Rewarded
         AdMob.addListener(RewardAdPluginEvents.Loaded, () => {
             this.states.rewarded = 'READY';
+            this.pool.rewarded.ready = 1;
+            this.retryCount.rewarded = 0; // Reset retries on success
+            console.log(`Ad Pool Update: Rewarded Ready (${this.pool.rewarded.ready}/${this.pool.rewarded.max})`);
         });
         AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
             this.states.rewarded = 'IDLE';
-            this.prepareRewarded();
+            this.pool.rewarded.ready = 0;
+            this.refillPool('rewarded'); // Immediately queue refill
         });
         AdMob.addListener(RewardAdPluginEvents.FailedToLoad, () => {
             this.states.rewarded = 'ERROR';
-            setTimeout(() => this.prepareRewarded(), 15000);
+            this.pool.rewarded.ready = 0;
+            const waitTime = Math.min(5000 * Math.pow(2, this.retryCount.rewarded), 60000);
+            this.retryCount.rewarded++;
+            setTimeout(() => this.refillPool('rewarded'), waitTime);
         });
     }
 
@@ -122,7 +170,8 @@ class AdsManager {
             }
         }
 
-        if (this.states.interstitial === 'READY') {
+        // Consume from Pool
+        if (this.pool.interstitial.ready > 0) {
             return new Promise(async (resolve) => {
                 let resolved = false;
                 const finish = (shown) => {
@@ -162,8 +211,8 @@ class AdsManager {
                 }
             });
         } else {
-            console.log('Interstitial Not Ready, proceding without ad');
-            this.prepareInterstitial();
+            console.log('Ad Pool: Interstitial empty, proceeding without ad. Triggering refill.');
+            this.refillPool('interstitial');
             return false;
         }
     }
@@ -187,9 +236,10 @@ class AdsManager {
             return true;
         }
 
-        if (this.states.rewarded !== 'READY') {
-            console.warn('Rewarded Ad Not Ready - Failing gracefully');
-            this.prepareRewarded();
+        // Consume from pool
+        if (this.pool.rewarded.ready === 0) {
+            console.warn('Ad Pool: Rewarded empty - Failing gracefully. Triggering refill.');
+            this.refillPool('rewarded');
             return false;
         }
 
