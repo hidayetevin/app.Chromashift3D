@@ -13,8 +13,38 @@ class ObstacleManager {
 
         // Stars
         this.activeStars = [];
-        this.starGeometry = new THREE.TetrahedronGeometry(0.3); // Low poly star
-        this.starMaterial = new THREE.MeshBasicMaterial({ color: 0xFFD700 }); // Gold
+        this.starGeometry = this.createStarGeometry();
+        this.starMaterial = new THREE.MeshLambertMaterial({
+            color: 0xFFD700,
+            emissive: 0x222200, // slight glow
+            flatShading: false
+        }); // Shiny Gold
+    }
+
+    createStarGeometry() {
+        const shape = new THREE.Shape();
+        const outerRadius = 0.35;
+        const innerRadius = 0.15;
+        const points = 5;
+
+        for (let i = 0; i < points * 2; i++) {
+            const r = i % 2 === 0 ? outerRadius : innerRadius;
+            const a = (i / (points * 2)) * Math.PI * 2;
+            if (i === 0) shape.moveTo(Math.sin(a) * r, Math.cos(a) * r);
+            else shape.lineTo(Math.sin(a) * r, Math.cos(a) * r);
+        }
+
+        const extrudeSettings = {
+            depth: 0.08,
+            bevelEnabled: true,
+            bevelSegments: 1,
+            steps: 1,
+            bevelSize: 0.02,
+            bevelThickness: 0.02
+        };
+        const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        geo.center(); // Important: Center geometry so it rotates nicely
+        return geo;
     }
 
     setNextSwitchThreshold() {
@@ -53,8 +83,7 @@ class ObstacleManager {
         // Update Stars (Rotation and cleanup)
         for (let i = this.activeStars.length - 1; i >= 0; i--) {
             const star = this.activeStars[i];
-            star.rotation.y += deltaTime * 2;
-            star.rotation.x += deltaTime;
+            star.rotation.y += deltaTime * 3; // Spin like a coin
 
             if (star.position.y < playerPosition.y - 15) {
                 // Remove and recycle (simple remove for now, pool later if needed)
